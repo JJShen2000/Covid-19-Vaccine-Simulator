@@ -96,12 +96,19 @@ def get_age_population(df_census_tracts, df_age_population, seperate_ages=[5, 19
     return age_population
 
 
-def load_data():
+def load_data(dataPath=None):
     """Load data
     Returns:
-        n, a, m, contact_group_probabilities, age_population
+        n, m, a, contact_group_probabilities, age_population
+
+        n (int): the number of population(nodes)
+        m (int): number of group class
+        a (int): number of age group
+        contact_group_probabilities (a list of dictionaries)
+        age_population(list of lists)
     """
-    dataPath = os.path.join('..','data')
+    if dataPath is None:
+        dataPath = os.path.join('..','data')
     df_age_population = pd.read_csv(os.path.join(dataPath, 'age_population.csv'), header=None)
     df_contact_prob = pd.read_csv(os.path.join(dataPath, 'contact_prob.csv'), skipinitialspace=True)
     df_census_tracts = pd.read_csv(os.path.join(dataPath, 'census_tracts.csv'), header=None) 
@@ -109,7 +116,7 @@ def load_data():
     n = get_n(df_age_population) 
     a, m, contact_group_probabilities = get_contact_group_probabilities(df_age_population, df_contact_prob, df_census_tracts)
     age_population = get_age_population(df_census_tracts, df_age_population)
-    return n, a, m, contact_group_probabilities, age_population
+    return n, m, a, contact_group_probabilities, age_population
 
 
 if __name__ == '__main__':
