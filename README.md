@@ -1,2 +1,2 @@
-# Covid-19-Vaccine-Simultator
-This is Covid-19 Vaccine Simultator!
+# Covid-19-Vaccine-Simulator
+This is Covid-19 Vaccine Simulator!
