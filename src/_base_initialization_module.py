@@ -18,18 +18,13 @@ class _base_initialization_module:
         self.age_population = self.data[4]
 
         self.attr_list = list()
+        self.sum_people = 0
         self.num_each_group = [0] * self.num_group_classes
         for tract in range(len(self.age_population)):
-            print(tract)
+            print("Processing tract: {}/{}".format(tract, len(self.age_population)))
             self.attr_list += self._assign_attr_in_each_tract(tract)
     
     def _assign_attr_in_each_tract(self, tract):
-        '''
-        - 建人數的node
-        - 根據年齡分布給age
-        - 根據contact group給group attribute
-        - 根據contact matrix給contact group內的node建邊
-        '''
         num_child1, num_child2, num_adult1, num_adult2 = self.age_population[tract]
         num_children = num_child1 + num_child2
         num_adults = num_adult1 + num_adult2
@@ -128,6 +123,17 @@ class _base_initialization_module:
                 group_list[p][7] = i + self.num_each_group[7]
         self.num_each_group[7] += len(work_groups)
 
+        for idx, node_attr in enumerate(group_list):
+            line = str(idx + self.sum_people) + ' '
+            g_list = list()
+            for i in range(self.num_group_classes):
+                if i in node_attr:
+                    g_list.append(str(node_attr[i]))
+            line += (str(len(g_list)) + ' ' + ' '.join(g_list) + ' ') * 2
+            line += '\n'
+            group_list[idx] = line
+        self.sum_people += num_people
+
         return group_list
     
     def _assign_worker_edge_between_tract(self, G):
@@ -160,15 +166,8 @@ class _base_initialization_module:
                     line += '\n'
             f.write(line)
 
-            for i, node_attr in enumerate(self.attr_list):
-                line = str(i) + ' '
-                group_list = list()
-                for i in range(self.num_group_classes):
-                    if i in node_attr:
-                        group_list.append(str(node_attr[i]))
-                line += (str(len(group_list)) + ' ' + ' '.join(group_list) + ' ') * 2
-                line += '\n'
-                f.write(line)
+            for node in self.attr_list:
+                f.write(node)
 
     def _assign_contact_group(self, obj, size):
         groups = list()
