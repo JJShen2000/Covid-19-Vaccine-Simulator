@@ -1,11 +1,11 @@
 import random
-import load_data.load_data
+from load_data import load_data
 
 class _base_initialization_module:
-    def __init__(self, fname):
+    def __init__(self):
         self.data = load_data()
-        build_graph()
-        output_sim_data()
+        self.build_graph()
+        self.output_sim_data()
     
     def build_graph(self):
         ''' Build the graph.
@@ -19,7 +19,8 @@ class _base_initialization_module:
 
         self.attr_list = list()
         self.num_each_group = [0] * self.num_group_classes
-        for tract in age_populaltion:
+        for tract in range(len(self.age_population)):
+            print(tract)
             self.attr_list += self._assign_attr_in_each_tract(tract)
     
     def _assign_attr_in_each_tract(self, tract):
@@ -34,10 +35,15 @@ class _base_initialization_module:
         num_adults = num_adult1 + num_adult2
         num_people = num_children + num_adults
 
-        group_list = [{"location": tract, "age_group": 0}] * num_child1
-        group_list += ([{"location": tract, "age_group": 1}] * num_child2)
-        group_list += ([{"location": tract, "age_group": 2}] * num_adult1)
-        group_list += ([{"location": tract, "age_group": 3}] * num_adult2)
+        group_list = list()
+        for _ in range(num_child1):
+            group_list.append({"location": tract, "age_group": 0})
+        for _ in range(num_child2):
+            group_list.append({"location": tract, "age_group": 1})
+        for _ in range(num_adult1):
+            group_list.append({"location": tract, "age_group": 2})
+        for _ in range(num_adult2):
+            group_list.append({"location": tract, "age_group": 3})
 
         '''Group households (index=0)'''
         people = list(range(0, num_people))
@@ -49,7 +55,7 @@ class _base_initialization_module:
 
         '''Group clusters (index=1)'''
         hs = list(range(0, len(households)))
-        clusters = _assign_contact_group(hs, 4)
+        clusters = self._assign_contact_group(hs, 4)
         for i, group in enumerate(clusters):
             for h in group:
                 for p in households[h]:
@@ -58,7 +64,7 @@ class _base_initialization_module:
 
         '''Group neighborhoods (index=8)'''
         hcs = list(range(0, len(clusters)))
-        neighborhoods = _assign_contact_group(hcs, 4)
+        neighborhoods = self._assign_contact_group(hcs, 4)
         for i, group in enumerate(neighborhoods):
             for hc in group:
                 for h in clusters[hc]:
@@ -68,7 +74,7 @@ class _base_initialization_module:
 
         '''Group communities (index=9)'''
         people = list(range(0, num_people))
-        communities = _assign_contact_group(people, 2000)
+        communities = self._assign_contact_group(people, 2000)
         for i, group in enumerate(communities):
             for p in group:
                 group_list[p][9] = i + self.num_each_group[9]
@@ -76,7 +82,7 @@ class _base_initialization_module:
 
         '''Group play groups (index=2)'''
         child1 = list(range(0, num_child1))
-        play_groups = _assign_contact_group(child1, 4)
+        play_groups = self._assign_contact_group(child1, 4)
         for i, group in enumerate(play_groups):
             for p in group:
                 group_list[p][2] = i + self.num_each_group[2]
@@ -84,7 +90,7 @@ class _base_initialization_module:
 
         '''Group daycares (index=3)'''
         child1 = list(range(0, num_child1))
-        daycares = _assign_contact_group(child1, 14)
+        daycares = self._assign_contact_group(child1, 14)
         for i, group in enumerate(daycares):
             for p in group:
                 group_list[p][3] = i + self.num_each_group[3]
@@ -92,7 +98,7 @@ class _base_initialization_module:
 
         '''Group elementary schools (index=4)'''
         child2 = list(range(num_child1, num_child2))
-        elem_schools = _assign_contact_group(child2, 79)
+        elem_schools = self._assign_contact_group(child2, 79)
         for i, group in enumerate(elem_schools):
             for p in group:
                 group_list[p][4] = i + self.num_each_group[4]
@@ -100,7 +106,7 @@ class _base_initialization_module:
 
         '''Group middle schools (index=5)'''
         child2 = list(range(num_child1, num_child2))
-        mid_schools = _assign_contact_group(child2, 128)
+        mid_schools = self._assign_contact_group(child2, 128)
         for i, group in enumerate(mid_schools):
             for p in group:
                 group_list[p][5] = i + self.num_each_group[5]
@@ -108,7 +114,7 @@ class _base_initialization_module:
 
         '''Group high schools (index=6)'''
         child2 = list(range(num_child1, num_child2))
-        high_schools = _assign_contact_group(child2, 155)
+        high_schools = self._assign_contact_group(child2, 155)
         for i, group in enumerate(high_schools):
             for p in group:
                 group_list[p][6] = i + self.num_each_group[6]
@@ -116,7 +122,7 @@ class _base_initialization_module:
 
         '''Group work groups (index=7)'''
         adult1 = list(range(num_children, num_adult1))
-        work_groups = _assign_contact_group(adult1, 20)
+        work_groups = self._assign_contact_group(adult1, 20)
         for i, group in enumerate(work_groups):
             for p in group:
                 group_list[p][7] = i + self.num_each_group[7]
@@ -136,12 +142,13 @@ class _base_initialization_module:
 
     def output_sim_data(self):
         with open('graph.txt', 'w') as f:
-            line = str(self.num_nodes) + ' ' + str(self.num_group_classes) + ' ' + str(self.num_age_groups) + ' '
+            line = str(self.num_nodes) + ' ' + str(self.num_group_classes) + ' ' + str(self.num_age_groups) + ' \n'
             f.write(line)
 
             line = ''
             for num in self.num_each_group:
                 line += (str(num) + ' ')
+            line += '\n'
             f.write(line)
 
             line = ''
@@ -160,9 +167,10 @@ class _base_initialization_module:
                     if i in node_attr:
                         group_list.append(str(node_attr[i]))
                 line += (str(len(group_list)) + ' ' + ' '.join(group_list) + ' ') * 2
+                line += '\n'
                 f.write(line)
 
-    def _assign_contact_group(obj, size):
+    def _assign_contact_group(self, obj, size):
         groups = list()
         random.shuffle(obj)
         for i in range(len(obj) // size):
