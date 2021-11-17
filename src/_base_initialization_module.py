@@ -18,10 +18,9 @@ class _base_initialization_module:
         self.age_population = self.data[4]
 
         self.attr_list = list()
-        self.sum_people = 0
         self.num_each_group = [0] * self.num_group_classes
         for tract in range(len(self.age_population)):
-            print("Processing tract: {}/{}".format(tract, len(self.age_population)))
+            print("Processing tract: {}/{}".format(tract+1, len(self.age_population)))
             self.attr_list += self._assign_attr_in_each_tract(tract)
     
     def _assign_attr_in_each_tract(self, tract):
@@ -123,8 +122,9 @@ class _base_initialization_module:
                 group_list[p][7] = i + self.num_each_group[7]
         self.num_each_group[7] += len(work_groups)
 
+        '''Turn the group list into a string'''
         for idx, node_attr in enumerate(group_list):
-            line = str(idx + self.sum_people) + ' '
+            line = str(node_attr["age_group"]) + ' '
             g_list = list()
             for i in range(self.num_group_classes):
                 if i in node_attr:
@@ -132,7 +132,6 @@ class _base_initialization_module:
             line += (str(len(g_list)) + ' ' + ' '.join(g_list) + ' ') * 2
             line += '\n'
             group_list[idx] = line
-        self.sum_people += num_people
 
         return group_list
     
@@ -147,6 +146,7 @@ class _base_initialization_module:
         pass
 
     def output_sim_data(self):
+        print("Generating graph.txt")
         with open('graph.txt', 'w') as f:
             line = str(self.num_nodes) + ' ' + str(self.num_group_classes) + ' ' + str(self.num_age_groups) + ' \n'
             f.write(line)
