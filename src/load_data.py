@@ -1,5 +1,7 @@
 import os
 import pandas as pd
+import math
+import numpy as np
 
 def get_n(df_age_population):
     """ Return the number of population(nodes)
@@ -96,27 +98,102 @@ def get_age_population(df_census_tracts, df_age_population, seperate_ages=[5, 19
     return age_population
 
 
+def get_worker_flow(df_age_population, df_city_to_city_commute, df_city, df_town):
+    worker_population_by_town = df_age_population[(df_age_population[2]>=19) & (df_age_population[2]<65)].drop([2], axis=1).groupby([0, 1], sort=False).sum()
+    worker_population_by_city = worker_population_by_town.groupby([0], sort=False).sum()
+    orther_area_worker_population = worker_population_by_city.iloc[-2] + worker_population_by_city.iloc[-1]
+    int(orther_area_worker_population)
+
+    new_c2c = df_city_to_city_commute.iloc[:, 1:]
+
+    new_c2c["金門縣"] = new_c2c["其他地區"]*int(worker_population_by_city.iloc[-2])//int(orther_area_worker_population)
+    new_c2c["連江縣"] = new_c2c["其他地區"]-new_c2c["金門縣"]
+    new_c2c = new_c2c.drop(["其他地區"], axis=1)
+    for i in range(20):
+        new_c2c.iloc[i] = new_c2c.iloc[i]/new_c2c.iloc[i].sum()
+    # new_c2c.append(new_c2c["金門縣"], ignore_index=True)
+    # pd.concat([new_c2c, new_c2c["金門縣"]], ignore_index = True, axis = 0)
+    new_row1 = pd.DataFrame(new_c2c["金門縣"])
+    new_row1.loc[20]=1-new_row1.sum()
+    new_row1.loc[21]=0
+    new_row1 = new_row1.transpose()
+    new_row1.columns = new_c2c.columns
+
+    new_row2 = pd.DataFrame(new_c2c["連江縣"])
+    new_row2.loc[20]=0
+    new_row2.loc[21]=1-new_row2.sum()
+    new_row2 = new_row2.transpose()
+    new_row2.columns = new_c2c.columns
+
+    # new_c2c.loc[20] = new_row1
+    # new_c2c.loc[21] = new_row2
+
+    wf_c2c = pd.concat([new_c2c, new_row1, new_row2], axis=0)
+    # new_row1
+    wf_c2c = wf_c2c.T.values.tolist()
+    worker_population_by_city = worker_population_by_city[3].values.tolist()
+
+    worker_population_by_town = list(worker_population_by_town[3])
+
+    city_enocding = {}
+    for i, city in enumerate(list(df_city[0])):
+        city_enocding[city] = i
+    town2citycode=[]
+    for town_city in list(df_town[0]):
+        town2citycode.append(city_enocding[town_city])
+        
+    n = 368
+    wf_t2t = [[0 for _ in range(n)] for _ in range(n)]
+
+    for i in range(368):
+        for j in range(368):
+            wf_t2t[i][j] = math.floor(worker_population_by_town[i] * (wf_c2c[town2citycode[i]][town2citycode[j]] * (worker_population_by_town[j]/worker_population_by_city[town2citycode[j]])))
+    
+    df_wf_t2t = pd.DataFrame(wf_t2t)
+    for i in range(368):
+        ratio = df_wf_t2t.iloc[i].sum() / worker_population_by_town[i]
+        df_wf_t2t.iloc[i] /= ratio
+    df_wf_t2t = df_wf_t2t.apply(np.floor).astype(int)
+    wf = df_wf_t2t.T.values.tolist()
+
+    for i in range(368):
+        wf[i][i] += worker_population_by_town[i]-df_wf_t2t.iloc[i].sum()
+        
+    for i in range(368):
+        for j in range(368):
+            if str(type(wf[i][j])) == '<class \'numpy.int64\'>':
+                wf[i][j] = wf[i][j].item()
+    
+    return wf
+
+
+
 def load_data(dataPath=None):
     """Load data
     Returns:
-        n, m, a, contact_group_probabilities, age_population
+        n, m, a, contact_group_probabilities, age_population, worker_flow
 
         n (int): the number of population(nodes)
         m (int): number of group class
         a (int): number of age group
         contact_group_probabilities (a list of dictionaries)
         age_population(list of lists)
+        worker_flow(list of lists) from town to town
     """
     if dataPath is None:
         dataPath = os.path.join('..','data')
     df_age_population = pd.read_csv(os.path.join(dataPath, 'age_population.csv'), header=None)
     df_contact_prob = pd.read_csv(os.path.join(dataPath, 'contact_prob.csv'), skipinitialspace=True)
     df_census_tracts = pd.read_csv(os.path.join(dataPath, 'census_tracts.csv'), header=None) 
+    df_city_to_city_commute = pd.read_csv(os.path.join(dataPath, 'city_to_city_commute.csv'))
+    df_city = pd.read_csv(os.path.join(dataPath, 'city.csv'), header=None)
 
     n = get_n(df_age_population) 
     a, m, contact_group_probabilities = get_contact_group_probabilities(df_age_population, df_contact_prob, df_census_tracts)
     age_population = get_age_population(df_census_tracts, df_age_population)
-    return n, m, a, contact_group_probabilities, age_population
+    worker_flow = get_worker_flow(df_age_population, df_city_to_city_commute, df_city, df_census_tracts)
+    
+    return n, m, a, contact_group_probabilities, age_population, worker_flow
 
 
 if __name__ == '__main__':
