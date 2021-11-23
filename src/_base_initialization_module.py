@@ -223,8 +223,14 @@ class _base_initialization_module:
         remainder = len(obj) % size
         for i in range(group_num):
             groups.append(obj[size*i : size*(i+1)])
-        for r in range(remainder):
-            groups[r%group_num].append(obj[size*group_num + r])
+
+        if remainder > 0:
+            if remainder > group_num:
+                groups.append(obj[size*group_num : ])
+            else:
+                for r in range(remainder):
+                    groups[r%group_num].append(obj[size*group_num + r])
+
         return groups
 
 if __name__ == '__main__':
