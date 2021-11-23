@@ -219,9 +219,12 @@ class _base_initialization_module:
     def _assign_contact_group(self, obj, size):
         groups = list()
         random.shuffle(obj)
-        for i in range(len(obj) // size):
+        group_num = len(obj) // size
+        remainder = len(obj) % size
+        for i in range(group_num):
             groups.append(obj[size*i : size*(i+1)])
-        groups.append(obj[size*(len(obj)//size) : ])
+        for r in range(remainder):
+            groups[r%group_num].append(obj[size*group_num + r])
         return groups
 
 if __name__ == '__main__':
