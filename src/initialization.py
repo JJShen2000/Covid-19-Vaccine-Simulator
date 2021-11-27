@@ -1,4 +1,5 @@
 import random
+import numpy as np
 from load_data import load_data
 
 class graph_init:
@@ -34,14 +35,10 @@ class graph_init:
         print("Assigning contact groups at night")
         self.num_contact_groups = 0
         self.group_type = list()
-        self.node_households = [None] * self.num_nodes
-        self.node_clusters = [None] * self.num_nodes
-        self.node_neighborhoods = [None] * self.num_nodes
-        self.node_communities = [None] * self.num_nodes
+        self.node_group_attr = np.full((self.num_nodes, self.num_group_classes), np.nan, dtype='uint64')
         for i, tract_group in enumerate(self.nodes):
             print("Processing tract: {}/{}".format(i+1, self.num_tracts))
             self._assign_night_group_in_each_tract(tract_group)
-            #break
 
         print("Applying worker flow")
         self.node_day_tracts = self.node_night_tracts[:]
@@ -49,6 +46,7 @@ class graph_init:
         for i in range(self.num_tracts):
             workers_each_day_tract.append(list())
         for tract_idx, tract in enumerate(self.nodes):
+            print("{}/{}".format(tract_idx+1, self.num_tracts))
             weight_distribution = self.worker_flow[tract_idx]
             for worker in tract[2]:
                 day_tract_idx = random.choices(list(range(self.num_tracts)), weights=weight_distribution, k=1)[0]
@@ -59,16 +57,9 @@ class graph_init:
                 self.node_day_tracts[wk] = tract_idx
 
         print("Assigning contact groups at day")
-        self.node_play_groups = [None] * self.num_nodes
-        self.node_daycares = [None] * self.num_nodes
-        self.node_elem_schools = [None] * self.num_nodes
-        self.node_midd_schools = [None] * self.num_nodes
-        self.node_high_schools = [None] * self.num_nodes
-        self.node_work_groups = [None] * self.num_nodes
         for i, tract_group in enumerate(self.nodes):
             print("Processing tract: {}/{}".format(i+1, self.num_tracts))
             self._assign_day_group_in_each_tract(tract_group)
-            #break
 
     def _assign_night_group_in_each_tract(self, tract_group):
         child1, child2, adult1, adult2 = tract_group
@@ -79,7 +70,7 @@ class graph_init:
         for i, group in enumerate(households):
             self.group_type.append(0)
             for p in group:
-                self.node_households[p] = i + self.num_contact_groups
+                self.node_group_attr[p, 0] = i + self.num_contact_groups
         self.num_contact_groups += len(households)
 
         '''Group clusters (index=1)'''
@@ -89,7 +80,7 @@ class graph_init:
             self.group_type.append(1)
             for h in group:
                 for p in households[h]:
-                    self.node_clusters[p] = i + self.num_contact_groups
+                    self.node_group_attr[p, 1] = i + self.num_contact_groups
         self.num_contact_groups += len(clusters)
 
         '''Group neighborhoods (index=8)'''
@@ -100,7 +91,7 @@ class graph_init:
             for hc in group:
                 for h in clusters[hc]:
                     for p in households[h]:
-                        self.node_neighborhoods[p] = i + self.num_contact_groups
+                        self.node_group_attr[p, 8] = i + self.num_contact_groups
         self.num_contact_groups += len(neighborhoods)
 
         '''Group communities (index=9)'''
@@ -109,7 +100,7 @@ class graph_init:
         for i, group in enumerate(communities):
             self.group_type.append(9)
             for p in group:
-                self.node_communities[p] = i + self.num_contact_groups
+                self.node_group_attr[p, 9] = i + self.num_contact_groups
         self.num_contact_groups += len(communities)
 
     def _assign_day_group_in_each_tract(self, tract_group):
@@ -121,7 +112,7 @@ class graph_init:
         for i, group in enumerate(play_groups):
             self.group_type.append(2)
             for p in group:
-                self.node_play_groups[p] = i + self.num_contact_groups
+                self.node_group_attr[p, 2] = i + self.num_contact_groups
         self.num_contact_groups += len(play_groups)
 
         '''Group daycares (index=3)'''
@@ -130,7 +121,7 @@ class graph_init:
         for i, group in enumerate(daycares):
             self.group_type.append(3)
             for p in group:
-                self.node_daycares[p] = i + self.num_contact_groups
+                self.node_group_attr[p, 3] = i + self.num_contact_groups
         self.num_contact_groups += len(daycares)
 
         '''Group elementary schools (index=4)'''
@@ -139,7 +130,7 @@ class graph_init:
         for i, group in enumerate(elem_schools):
             self.group_type.append(4)
             for p in group:
-                self.node_elem_schools[p] = i + self.num_contact_groups
+                self.node_group_attr[p, 4] = i + self.num_contact_groups
         self.num_contact_groups += len(elem_schools)
 
         '''Group middle schools (index=5)'''
@@ -148,7 +139,7 @@ class graph_init:
         for i, group in enumerate(mid_schools):
             self.group_type.append(5)
             for p in group:
-                self.node_midd_schools[p] = i + self.num_contact_groups
+                self.node_group_attr[p, 5] = i + self.num_contact_groups
         self.num_contact_groups += len(mid_schools)
 
         '''Group high schools (index=6)'''
@@ -157,7 +148,7 @@ class graph_init:
         for i, group in enumerate(high_schools):
             self.group_type.append(6)
             for p in group:
-                self.node_high_schools[p] = i + self.num_contact_groups
+                self.node_group_attr[p, 6] = i + self.num_contact_groups
         self.num_contact_groups += len(high_schools)
 
         '''Group work groups (index=7)'''
@@ -166,7 +157,7 @@ class graph_init:
         for i, group in enumerate(work_groups):
             self.group_type.append(7)
             for p in group:
-                self.node_work_groups[p] = i + self.num_contact_groups
+                self.node_group_attr[p, 7] = i + self.num_contact_groups
         self.num_contact_groups += len(work_groups)
 
     def output_sim_data(self):
@@ -195,16 +186,15 @@ class graph_init:
                     for p in age_group:
                         line = str(j) + ' ' + str(self.node_night_tracts[p]) + ' \n'
                         if j == 0:
-                            line += ('2 ' + str(self.node_play_groups[p]) + ' ' + str(self.node_daycares[p]) + ' \n')
+                            line += ('2 ' + str(self.node_group_attr[p, 2]) + ' ' + str(self.node_group_attr[p, 3]) + ' \n')
                         elif j == 1:
-                            line += ('3 ' + str(self.node_elem_schools[p]) + ' ' + str(self.node_midd_schools[p]) + ' ' + str(self.node_high_schools[p]) + ' \n')
+                            line += ('3 ' + str(self.node_group_attr[p, 4]) + ' ' + str(self.node_group_attr[p, 5]) + ' ' + str(self.node_group_attr[p, 6]) + ' \n')
                         elif j == 2:
-                            line += ('1 ' + str(self.node_work_groups[p]) + ' \n')
+                            line += ('1 ' + str(self.node_group_attr[p, 7]) + ' \n')
                         else:
-                            line += ('2 ' + str(self.node_neighborhoods[p]) + ' ' + str(self.node_communities[p]) + ' \n')
-                        line += ('4 ' + str(self.node_households[p]) + ' ' + str(self.node_clusters[p]) + ' ' + str(self.node_neighborhoods[p]) + ' ' + str(str(self.node_communities[p])) + ' \n')
+                            line += ('2 ' + str(self.node_group_attr[p, 8]) + ' ' + str(self.node_group_attr[p, 9]) + ' \n')
+                        line += ('4 ' + str(self.node_group_attr[p, 0]) + ' ' + str(self.node_group_attr[p, 1]) + ' ' + str(self.node_group_attr[p, 8]) + ' ' + str(self.node_group_attr[p, 9]) + ' \n')
                         f.write(line)
-                #break
 
     def _assign_contact_group(self, obj, size):
         groups = list()
