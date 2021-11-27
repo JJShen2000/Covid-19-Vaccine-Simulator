@@ -1,7 +1,7 @@
 import random
 from load_data import load_data
 
-class _base_initialization_module:
+class graph_init:
     def __init__(self):
         self.data = load_data()
         self.build_graph()
@@ -169,16 +169,6 @@ class _base_initialization_module:
                 self.node_work_groups[p] = i + self.num_contact_groups
         self.num_contact_groups += len(work_groups)
 
-    def _assign_worker_edge_between_tract(self, G):
-        '''
-        - % of worker with diff day and night?
-        - distribution to assign location of day and night?
-        '''
-        pass
-    
-    def _assign_initial_infectors(self, G):
-        pass
-
     def output_sim_data(self):
         print("Generating graph.txt")
         with open('graph.txt', 'w') as f:
@@ -234,4 +224,4 @@ class _base_initialization_module:
         return groups
 
 if __name__ == '__main__':
-    _base_initialization_module()
+    graph_init()
