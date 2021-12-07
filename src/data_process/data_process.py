@@ -1,10 +1,18 @@
 import csv
+import os
 from shutil import copyfile
 
 id_city = {}
 id_census_tracts = {}
 
 dump_dir = '../../data/init_data/'
+
+def create_dump_dir():
+    if not os.path.isdir('../../data'):
+        os.mkdir('../../data')
+        os.mkdir('../../data/init_data')
+        os.mkdir('../../data/sim_data')
+        os.mkdir('../../data/vis_data')
 
 def get_census_tracts():
     with open('./raw_data/age_population_raw.csv') as rcsv:
@@ -85,6 +93,7 @@ def get_contact_prob():
 
 
 if __name__ == '__main__':
+    create_dump_dir()
     get_census_tracts()
     get_age_population()
     get_town_population()
