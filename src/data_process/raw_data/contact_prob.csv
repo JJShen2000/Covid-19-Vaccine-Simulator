@@ -1,0 +1,23 @@
+Contact group, Infected, Susceptible, Contact Probability
+Household, Child, Child, 0.6
+Household, Child, Adult, 0.3
+Household, Adult, Child, 0.3
+Household, Adult, Adult, 0.4
+Household cluster, Child, Child, 0.075
+Household cluster, Child, Adult, 0.04
+Household cluster, Adult, Child, 0.04
+Household cluster, Adult, Adult, 0.05
+Small play group, Child 0-4, Child 0-4, 0.35
+Large daycare, Child 0-4, Child 0-4, 0.15
+Elementary school, Child 5-18, Child 5-18, 0.0435
+Middle school, Child 5-18, Child 5-18, 0.0375
+High school, Child 5-18, Child 5-18, 0.0315
+Workgroup, Adult 19-64, Adult 19-64, 0.0575
+Neighborhood, Anyone, Adult 65+, 0.00087
+Neighborhood, Anyone, Adult 19-64, 0.00058
+Neighborhood, Anyone, Child 5-18, 0.0002175
+Neighborhood, Anyone, Child 0-4, 0.0000725
+Community, Anyone, Adult 65+, 0.0002175
+Community, Anyone, Adult 19-64, 0.000145
+Community, Anyone, Child 5-18, 0.0000544
+Community, Anyone, Child 0-4, 0.0000181
