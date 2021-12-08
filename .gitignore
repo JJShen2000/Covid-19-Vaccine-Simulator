@@ -237,6 +237,9 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
+# Vim
+*.swp
+
 # other 
 
 data/*
