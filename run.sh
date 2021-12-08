@@ -62,6 +62,10 @@ sim()
     fi
 
     echo "Running Simulation..."
+    
+    cd src/simulation
+    source sim.sh
+    cd ../..
 
     wait
 }

@@ -56,7 +56,7 @@ leaky()
 					ct="$(echo "$conf" | awk -F / '{print $NF}' | sed 's/.txt//; s/.conf//')"
 					it="$(echo "$init_infector" | awk -F / '{print $NF}' | sed 's/.txt//; s/.conf//')"
 					vt="$(echo "$vaccine" | awk -F / '{print $NF}' | sed 's/.txt//; s/.conf//')"
-					dump_fn="$(echo "${gt}_${ct}_${it}_${vt}.txt")"
+					dump_fn="$(echo "${dump_dir}${leaky_fn}_${gt}_${ct}_${it}_${vt}.csv")"
 
 					./${leaky_fn} $graph $conf $init_infector $vaccine $dump_fn
 					wait
@@ -74,6 +74,23 @@ all_or_nothing()
 	fi
 
 	echo "simulating all-or-nothing model"
+
+	for graph in ${graph_dir}; do
+		for conf in ${conf_dir}; do
+			for init_infector in ${init_infector_dir}; do
+				for vaccine in ${vaccine_dir}; do
+					gt="$(echo "$graph" | awk -F / '{print $NF}' | sed 's/.txt//; s/.conf//')"
+					ct="$(echo "$conf" | awk -F / '{print $NF}' | sed 's/.txt//; s/.conf//')"
+					it="$(echo "$init_infector" | awk -F / '{print $NF}' | sed 's/.txt//; s/.conf//')"
+					vt="$(echo "$vaccine" | awk -F / '{print $NF}' | sed 's/.txt//; s/.conf//')"
+					dump_fn="$(echo "${dump_dir}${aon_fn}_${gt}_${ct}_${it}_${vt}.csv")"
+
+					./${aon_fn} $graph $conf $init_infector $vaccine $dump_fn
+					wait
+				done
+			done
+		done
+	done
 }
 
 main()

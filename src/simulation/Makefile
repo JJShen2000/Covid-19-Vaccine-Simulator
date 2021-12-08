@@ -1,5 +1,5 @@
 CC = g++
-CXXFLAGS = -Wall -std=c++14 -g -O3
+CXXFLAGS = -Wall -std=c++14 -g #-O3
 TARGETS = sfeirvd_aon sfeirvd_leaky
 
 all: sfeirvd_aon sfeirvd_leaky
