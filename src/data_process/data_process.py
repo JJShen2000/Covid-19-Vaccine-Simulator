@@ -12,6 +12,8 @@ def create_dump_dir():
         os.mkdir('../../data')
         os.mkdir('../../data/init_data')
         os.mkdir('../../data/sim_data')
+        os.mkdir('../../data/sim_data/basic')
+        os.mkdir('../../data/sim_data/vaccine')
         os.mkdir('../../data/vis_data')
 
 def get_census_tracts():

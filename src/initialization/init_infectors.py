@@ -1,6 +1,6 @@
 import random
 
-dump_dir = "../../data/sim_data/"
+dump_dir = "../../data/sim_data/basic/"
 dir_path =  dump_dir + "group_tract_age/"
 total_infected = list()
 for i in range(368):

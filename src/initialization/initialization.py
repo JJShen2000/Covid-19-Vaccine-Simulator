@@ -3,7 +3,7 @@ import random
 import numpy as np
 from load_data import load_data
 
-dump_dir = "../../data/sim_data/"
+dump_dir = "../../data/sim_data/basic/"
 
 class graph_init:
     def __init__(self):
