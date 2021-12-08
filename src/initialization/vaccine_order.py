@@ -1,7 +1,7 @@
 import random
 
 dump_dir = "../../data/sim_data/vaccine/"
-dir_path = "../../data/sim_data/basic/group_tract_age/"
+dir_path = "../../data/sim_data/group_tract_age/"
 all_age3 = list()
 all_others = list()
 for i in range(368):

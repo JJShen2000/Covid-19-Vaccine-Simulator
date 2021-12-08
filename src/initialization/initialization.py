@@ -3,7 +3,7 @@ import random
 import numpy as np
 from load_data import load_data
 
-dump_dir = "../../data/sim_data/basic/"
+dump_dir = "../../data/sim_data/"
 
 class graph_init:
     def __init__(self):
@@ -173,7 +173,7 @@ class graph_init:
 
     def output_sim_data(self):
         print("Generating graph.txt")
-        with open(dump_dir + 'graph.txt', 'w') as f:
+        with open(dump_dir + 'graph/graph.txt', 'w') as f:
             line = str(self.num_nodes) + ' 2 ' + str(self.num_contact_groups) + ' ' + str(self.num_age_groups) + ' ' + str(self.num_group_classes) + ' ' + str(self.num_tracts) + ' \n'
             f.write(line)
 

@@ -1,6 +1,6 @@
 import random
 
-dump_dir = "../../data/sim_data/basic/"
+dump_dir = "../../data/sim_data/"
 dir_path =  dump_dir + "group_tract_age/"
 total_infected = list()
 for i in range(368):
@@ -19,7 +19,7 @@ for i in range(368):
     infected = random.sample(people, num_infected)
     total_infected += infected
 
-with open(dump_dir + "init_infector_doc.txt", 'w') as f:
+with open(dump_dir + "init_infector/init_infector_doc.txt", 'w') as f:
     line = str(len(total_infected)) + ' \n'
     for p in total_infected:
         line += (p + ' ')

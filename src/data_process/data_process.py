@@ -12,7 +12,9 @@ def create_dump_dir():
         os.mkdir('../../data')
         os.mkdir('../../data/init_data')
         os.mkdir('../../data/sim_data')
-        os.mkdir('../../data/sim_data/basic')
+        os.mkdir('../../data/sim_data/graph')
+        os.mkdir('../../data/sim_data/conf')
+        os.mkdir('../../data/sim_data/init_infector')
         os.mkdir('../../data/sim_data/vaccine')
         os.mkdir('../../data/vis_data')
 
@@ -93,6 +95,9 @@ def get_city_to_city_commute():
 def get_contact_prob():
     copyfile('./raw_data/contact_prob.csv', dump_dir + 'contact_prob.csv')
 
+def get_configurations():
+    copyfile('./raw_data/covid.conf','../../data/sim_data/conf/covid.conf')
+
 
 if __name__ == '__main__':
     create_dump_dir()
@@ -101,3 +106,4 @@ if __name__ == '__main__':
     get_town_population()
     get_city_to_city_commute()
     get_contact_prob()
+    get_configurations()

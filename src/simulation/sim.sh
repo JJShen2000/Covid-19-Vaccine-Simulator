@@ -35,6 +35,11 @@ makef()
 	wait
 }
 
+makec()
+{
+	make clean
+}
+
 leaky()
 {
 	if [ $no_leaky -eq 1 ]; then
@@ -78,6 +83,8 @@ main()
 
 	leaky
 	all_or_nothing
+
+	makec
 }
 
 main $@
