@@ -1,0 +1,8 @@
+prob_transmission 0.2
+infectious_period 5
+simulate_day 30
+latent_period 5.5
+prob_death 0.24
+prob_immute 0.5
+vaccine_population 2
+vaccine_efficiency 0.8
