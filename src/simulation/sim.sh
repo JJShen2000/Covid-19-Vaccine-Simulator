@@ -3,7 +3,16 @@
 no_aon=0
 no_leaky=0
 
-data_dir=""
+aon_fn="sfeirvd_aon"
+leaky_fn="sfeirvd_leaky"
+
+data_dir="../../data/sim_data/"
+graph_dir="${data_dir}graph/*"
+conf_dir="${data_dir}conf/*"
+init_infector_dir="${data_dir}init_infector/*"
+vaccine_dir="${data_dir}vaccine/*"
+
+dump_dir="../../data/vis_data/"
 
 preprocess()
 {
@@ -19,6 +28,13 @@ preprocess()
     done
 }
 
+makef()
+{
+	make
+
+	wait
+}
+
 leaky()
 {
 	if [ $no_leaky -eq 1 ]; then
@@ -27,7 +43,23 @@ leaky()
 
 	echo "simulating leaky model"
 
-	
+	for graph in ${graph_dir}; do
+		for conf in ${conf_dir}; do
+			for init_infector in ${init_infector_dir}; do
+				for vaccine in ${vaccine_dir}; do
+					gt="$(echo "$graph" | awk -F / '{print $NF}' | sed 's/.txt//; s/.conf//')"
+					ct="$(echo "$conf" | awk -F / '{print $NF}' | sed 's/.txt//; s/.conf//')"
+					it="$(echo "$init_infector" | awk -F / '{print $NF}' | sed 's/.txt//; s/.conf//')"
+					vt="$(echo "$vaccine" | awk -F / '{print $NF}' | sed 's/.txt//; s/.conf//')"
+					dump_fn="$(echo "${gt}_${ct}_${it}_${vt}.txt")"
+
+					./${leaky_fn} $graph $conf $init_infector $vaccine $dump_fn
+					wait
+				done
+			done
+		done
+	done
+
 }
 
 all_or_nothing()
@@ -37,13 +69,15 @@ all_or_nothing()
 	fi
 
 	echo "simulating all-or-nothing model"
-
 }
 
 main()
 {
 	preprocess $@
+	makef
 
+	leaky
+	all_or_nothing
 }
 
 main $@
