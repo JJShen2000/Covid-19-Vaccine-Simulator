@@ -1,5 +1,5 @@
-#ifndef SFEIRVDMODEL_HPP
-#define SFEIRVDMODEL_HPP
+#ifndef SFEIRVDMODELLEAKING_HPP
+#define SFEIRVDMODELLEAKING_HPP
 
 #include <iostream>
 #include <unordered_map>
@@ -13,7 +13,7 @@
 
 #include "BaseModel.hpp"
 
-class SFEIRVDModel : public BaseModel {
+class SFEIRVDModelLeaking : public BaseModel {
 public:
     void load(std::istream& in_graph, std::istream& in_param, std::istream& in_init, std::istream& in_vacc) {
         //std::cout << "load\n";
@@ -24,6 +24,7 @@ public:
 
         S.init(N_gp, N_ag, cgpp);
         F.init(N_gp, N_ag, cgpp);
+        V.init(N_gp, N_ag, cgpp);
 
         loadVaccineOrder(in_vacc);
 
@@ -98,7 +99,7 @@ protected:
         }
     }   
 
-    Nodes infection(SuspictibleState& Sus, uint period) {
+    Nodes infection(SuspictibleState& Sus, uint period, double prob_trans) {
         //std::cout << "one infection\n";
         // Nodes sus2i;
         // for (uint i = 0; i < I.size(); ++i) {
@@ -112,9 +113,10 @@ protected:
         //     }
         // }
         // return sus2i;
+        //std::cout << "prob trans " << prob_trans << '\n';
         Nodes sus2i;
         for (uint i = 0; i < I.size(); ++i) {
-            Nodes tmp = Sus.infected(I[i], period, prob_transmission);
+            Nodes tmp = Sus.infected(I[i], period, prob_trans);
             sus2i.insert(sus2i.end(), tmp.begin(), tmp.end());
         }
         return sus2i;
@@ -141,8 +143,8 @@ protected:
 
     void simulate_unit(const Time::TimeStep& ts) {
         std::cout << "----simulate unit " << ts.getDay() << ' ' << ts.getPeriod() << "----\n";
-        Nodes s2e = infection(S, ts.getPeriod());
-        Nodes f2e = infection(F, ts.getPeriod());
+        Nodes s2e = infection(S, ts.getPeriod(), prob_transmission);
+        Nodes f2e = infection(F, ts.getPeriod(), prob_transmission);
 
         Nodes e2i = E.expire();
         Nodes i2frd = I.expire(), i2f, i2r, i2d;
@@ -176,20 +178,14 @@ protected:
         i2d.setState('D');
         for (auto& v : i2d) D.insert(v);
 
-        Nodes s2fv = vaccination(), s2f, s2v;
-        for (const auto& v : s2fv) {
-            if (Random::trail(vaccine_efficiency)) {
-                s2v.push_back(v);
-            }
-            else {
-                s2f.push_back(v);
-            }
-        }
+        Nodes s2v = vaccination();
 
-        statisticUnit(ts, s2f, s2v, s2e, f2e, e2i, i2f, i2r, i2d);
+        Nodes v2e = infection(V, ts.getPeriod(), prob_transmission * (1 - vaccine_efficiency));
 
-        s2f.setState('F');
-        for (auto& v : s2f) F.insert(v);
+        statisticUnit(ts, v2e, s2v, s2e, f2e, e2i, i2f, i2r, i2d);
+
+        v2e.setState('E');
+        for (auto& v : v2e) E.insert(v);
 
         s2v.setState('V');
         for (auto& v : s2v) V.insert(v);
@@ -197,12 +193,12 @@ protected:
 
     // to override
     virtual void statisticInit() = 0;
-    virtual void statisticUnit(const Time::TimeStep& ts, const Nodes& s2f, const Nodes& s2v, const Nodes& s2e, const Nodes& f2e, const Nodes& e2i, const Nodes& i2f, const Nodes& i2r, const Nodes& i2d) = 0;
+    virtual void statisticUnit(const Time::TimeStep& ts, const Nodes& v2e, const Nodes& s2v, const Nodes& s2e, const Nodes& f2e, const Nodes& e2i, const Nodes& i2f, const Nodes& i2r, const Nodes& i2d) = 0;
     virtual void statisticEnd() = 0;
 
-    SuspictibleState S, F;
+    SuspictibleState S, F, V;
     ExpiringState E, I;
-    StableState R, V, D;
+    StableState R, D;
 
     Nodes vacc_order;
 

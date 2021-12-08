@@ -1,13 +1,13 @@
-#ifndef SFEIRVDSIMULATION_HPP
-#define SFEIRVDSIMULATION_HPP
+#ifndef SFEIRVDSIMULATIONLEAKING_HPP
+#define SFEIRVDSIMULATIONLEAKING_HPP
 
 #include <set>
 
 //#define DETAIL
 
-#include "SFEIRVDModel.hpp"
+#include "SFEIRVDModelLeaking.hpp"
 
-class SFEIRVDSimulation : public SFEIRVDModel {
+class SFEIRVDSimulationLeaking : public SFEIRVDModelLeaking {
 public:
     void setOutFile(const std::string& fname) {
         fout.open(fname);
@@ -41,7 +41,7 @@ protected:
         showHeader();
     }
 
-    virtual void statisticUnit(const Time::TimeStep& ts, const Nodes& s2f, const Nodes& s2v, const Nodes& s2e, const Nodes& f2e, const Nodes& e2i, const Nodes& i2f, const Nodes& i2r, const Nodes& i2d) override {
+    virtual void statisticUnit(const Time::TimeStep& ts, const Nodes& v2e, const Nodes& s2v, const Nodes& s2e, const Nodes& f2e, const Nodes& e2i, const Nodes& i2f, const Nodes& i2r, const Nodes& i2d) override {
         //std::cout << "statistic unit\n";
         for (const auto& v : i2f) {
             --icnt[v.getLocation()];
@@ -59,9 +59,9 @@ protected:
         show(ts);
 
         #ifdef DETAIL
-        for (auto v : s2f) {
-            S.erase(v.getID());
-            F.insert(v.getID());
+        for (auto v : v2e) {
+            V.erase(v.getID());
+            E.insert(v.getID());
         }
         for (auto v : s2v) {
             S.erase(v.getID());

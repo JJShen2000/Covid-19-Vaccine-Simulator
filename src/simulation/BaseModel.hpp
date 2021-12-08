@@ -32,7 +32,7 @@ protected:
     virtual void simulate_unit(const Time::TimeStep& ts) = 0;
 
     void loadGraph(std::istream& in) {
-        std::cout << "load graph\n";
+        //std::cout << "load graph\n";
 #ifdef DEBUG
         LOG("--load graph")
 #endif
@@ -57,7 +57,7 @@ protected:
         LOG("------assign node poll")
 #endif  
         ndp.resize(N_nd);
-        std::cout << "ndp resize " << N_nd << '\n';
+        //std::cout << "ndp resize " << N_nd << '\n';
 
 #ifdef DEBUG
         LOG("----assign contact matrix")
@@ -74,8 +74,8 @@ protected:
 #endif
         for (uint i = 0; i < N_cm; ++i) {
             cmp[i].setSize(N_ag);
-            for (int j = 0; j < N_ag; ++j) {
-                for (int k = 0; k < N_ag; ++k) {
+            for (uint j = 0; j < N_ag; ++j) {
+                for (uint k = 0; k < N_ag; ++k) {
                     double p;
                     in >> p;
                     cmp[i].setRate(j, k, p);
@@ -83,7 +83,7 @@ protected:
             }
         }
 
-        std::cout << "load ndp, cgpp node\n";
+        //std::cout << "load ndp, cgpp node\n";
 
 #ifdef DEBUG
         LOG("----push state node")
@@ -107,7 +107,7 @@ protected:
     }
 
     std::unordered_map<std::string, double> loadParam(std::istream& in) const {
-        std::cout << "load param\n";
+        //std::cout << "load param\n";
 #ifdef DEBUG
         LOG("--load param")
 #endif
@@ -124,7 +124,7 @@ protected:
     }
 
     std::vector<std::pair<Location, uint>> loadInit(std::istream& in) const {
-        std::cout << "load init\n";
+        //std::cout << "load init\n";
 #ifdef DEBUG
         LOG("--load init")
 #endif
