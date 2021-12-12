@@ -1,9 +1,23 @@
 import random
+import pandas as pd
+
+df_tracts = pd.read_csv('../../data/init_data/census_tracts.csv', header=None)
+tract_dict = dict()
+for i in range(len(df_tracts)):
+    tract_name = df_tracts.iloc[i, 0] + df_tracts.iloc[i, 1]
+    tract_dict[tract_name] = i
+
+num_infected_each_tract = dict()
+df_tract_infectors = pd.read_csv('../data_process/raw_data/tract_init_infectors.csv', header=None)
+for _, df_row in df_tract_infectors.iterrows():
+    tract_code = tract_dict[df_row[0]]
+    num_infected = int(df_row[1])
+    num_infected_each_tract[tract_code] = num_infected
 
 dump_dir = "../../data/sim_data/"
 dir_path =  dump_dir + "group_tract_age/"
 total_infected = list()
-for i in range(368):
+for i in num_infected_each_tract.keys():
     num_in_tract = 0
     people = list()
     for j in range(4):
@@ -13,10 +27,7 @@ for i in range(368):
             p = f.readline().strip().split()
         num_in_tract += n
         people += p
-
-    max_infected = num_in_tract // 10000
-    num_infected = random.randint(0, max_infected)
-    infected = random.sample(people, num_infected)
+    infected = random.sample(people, num_infected_each_tract[i])
     total_infected += infected
 
 with open(dump_dir + "init_infector/init_infector_doc.txt", 'w') as f:
