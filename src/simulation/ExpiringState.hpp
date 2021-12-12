@@ -4,13 +4,15 @@
 #include <vector>
 #include <utility>
 
-#include "Uint.hpp"
-#include "BaseState.hpp"
+//#include "Uint.hpp"
+//#include "BaseState.hpp"
+#include "Type.hpp"
 #include "Time.hpp"
+#include "Random.hpp"
 
-class ExpiringState : public BaseState, std::vector<std::pair<Node, uint>> {
+class ExpiringState : public std::vector<std::pair<Node, uint>> {
 public:
-    virtual void insert(const Node& u) override {
+    void insert(const Node& u) {
 #ifdef DEBUG
         std::cout << "--insert state infec " << u.getID() << '\n';
 #endif
@@ -19,6 +21,12 @@ public:
         std::cout << "----insert " << u.getID() << " with exp period " << expt << '\n';
 #endif
         std::vector<std::pair<Node, uint>>::push_back({u, expt});
+    }
+
+    void insert(const Nodes& nds) {
+        for (auto& v : nds) {
+            insert(v);
+        }
     }
 
     Nodes expire() {
@@ -46,14 +54,14 @@ public:
     }
 
     void setAvgPeriod(double val) {
-        avg_period = val;
+        avg_rate = 1 / val;
     }
 
 protected:
     uint setExpiringTime(const Node&) const {
-        return std::ceil(Random::exp_dis(1 / avg_period));
+        return std::ceil(Random::exp_dis(avg_rate));
     }
-    double avg_period;
+    double avg_rate;
 };
 
 #endif

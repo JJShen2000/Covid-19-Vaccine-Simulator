@@ -243,3 +243,7 @@ dkms.conf
 # other 
 
 data/*
+
+
+sfeirvd_aon
+sfeirvd_leaky

@@ -16,7 +16,7 @@
 class SFEIRVDModel : public BaseModel {
 public:
     void load(std::istream& in_graph, std::istream& in_param, std::istream& in_init, std::istream& in_vacc) {
-        //std::cout << "load\n";
+        std::cout << "Initializing...\n";
         loadGraph(in_graph);
 
         auto mp = loadParam(in_param);
@@ -32,24 +32,24 @@ public:
     }
 
     void simulate() {
-        //std::cout << "simulate\n";
+        std::cout << "Simulating...\n";
         statisticInit();
         BaseModel::simulate();
         statisticEnd();
     }
 
 protected:
-    void initParam(std::unordered_map<std::string, double>& mp) {
+    void initParam(std::unordered_map<std::string, std::vector<double>>& mp) {
         //std::cout << "init param\n";
-        latent_period = mp["latent_period"];
-        infectious_period = mp["infectious_period"];
-        prob_transmission = mp["prob_transmission"];
+        latent_period = mp["latent_period"][0];
+        infectious_period = mp["infectious_period"][0];
+        prob_transmission = mp["prob_transmission"][0];
         prob_death = mp["prob_death"];
         prob_immute = mp["prob_immute"];
-        vaccine_population = mp["vaccine_population"];
-        vaccine_efficiency = mp["vaccine_efficiency"];
+        vaccine_population = mp["vaccine_population"][0];
+        vaccine_efficiency = mp["vaccine_efficiency"][0];
 
-        tm.setDay(mp["simulate_day"]);
+        tm.setDay(mp["simulate_day"][0]);
 
         I.setAvgPeriod(infectious_period);
         E.setAvgPeriod(latent_period);
@@ -98,20 +98,7 @@ protected:
         }
     }   
 
-    Nodes infection(SuspictibleState& Sus, uint period) {
-        //std::cout << "one infection\n";
-        // Nodes sus2i;
-        // for (uint i = 0; i < I.size(); ++i) {
-        //     Node u = I[i];
-        //     for (auto cgp : u.getGroups()[period]) {          
-        //         Nodes tmp = Sus.infected(u.getAge(), cgp, prob_transmission);
-        //         while (tmp.size()) {
-        //             sus2i.push_back(tmp.back());
-        //             tmp.pop_back();
-        //         }
-        //     }
-        // }
-        // return sus2i;
+    inline Nodes infection(SuspictibleState& Sus, uint period) {
         Nodes sus2i;
         for (uint i = 0; i < I.size(); ++i) {
             Nodes tmp = Sus.infected(I[i], period, prob_transmission);
@@ -140,17 +127,18 @@ protected:
     }
 
     void simulate_unit(const Time::TimeStep& ts) {
-        std::cout << "----simulate unit " << ts.getDay() << ' ' << ts.getPeriod() << "----\n";
+        //std::cout << "----simulate unit " << ts.getDay() << ' ' << ts.getPeriod() << "----\n";
         Nodes s2e = infection(S, ts.getPeriod());
         Nodes f2e = infection(F, ts.getPeriod());
 
         Nodes e2i = E.expire();
         Nodes i2frd = I.expire(), i2f, i2r, i2d;
         for (const auto& v : i2frd) {
-            if (Random::trail(prob_death)) {
+            double pd = prob_death[v.getAge()];
+            if (Random::trail(pd)) {
                 i2d.push_back(v);
             }
-            else if (Random::trail(prob_immute / (1 - prob_death))) {
+            else if (Random::trail(prob_immute[v.getAge()] / (1 - pd))) {
                 i2r.push_back(v);
             }
             else {
@@ -159,22 +147,22 @@ protected:
         }
 
         s2e.setState('E');
-        for (auto& v : s2e) E.insert(v);
+        E.insert(s2e);
 
         f2e.setState('E');
-        for (auto& v : f2e) E.insert(v);
+        E.insert(f2e);
 
         e2i.setState('I');
-        for (auto& v : e2i) I.insert(v);
+        I.insert(e2i);
 
         i2f.setState('F');
-        for (auto& v : i2f) F.insert(v);
+        F.insert(i2f);
 
         i2r.setState('R');
-        for (auto& v : i2r) R.insert(v);
+        R.insert(i2r);
 
         i2d.setState('D');
-        for (auto& v : i2d) D.insert(v);
+        D.insert(i2d);
 
         Nodes s2fv = vaccination(), s2f, s2v;
         for (const auto& v : s2fv) {
@@ -189,10 +177,10 @@ protected:
         statisticUnit(ts, s2f, s2v, s2e, f2e, e2i, i2f, i2r, i2d);
 
         s2f.setState('F');
-        for (auto& v : s2f) F.insert(v);
+        F.insert(s2f);
 
         s2v.setState('V');
-        for (auto& v : s2v) V.insert(v);
+        V.insert(s2v);
     }
 
     // to override
@@ -211,8 +199,8 @@ protected:
     double latent_period;
     double infectious_period;
     double prob_transmission;
-    double prob_death;
-    double prob_immute;
+    std::vector<double> prob_death;
+    std::vector<double> prob_immute;
 };
 
 #endif

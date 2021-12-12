@@ -16,7 +16,7 @@
 class SFEIRVDModelLeaking : public BaseModel {
 public:
     void load(std::istream& in_graph, std::istream& in_param, std::istream& in_init, std::istream& in_vacc) {
-        //std::cout << "load\n";
+        std::cout << "Initializing...\n";
         loadGraph(in_graph);
 
         auto mp = loadParam(in_param);
@@ -33,24 +33,24 @@ public:
     }
 
     void simulate() {
-        //std::cout << "simulate\n";
+        std::cout << "Simulating...\n";
         statisticInit();
         BaseModel::simulate();
         statisticEnd();
     }
 
 protected:
-    void initParam(std::unordered_map<std::string, double>& mp) {
+    void initParam(std::unordered_map<std::string, std::vector<double>>& mp) {
         //std::cout << "init param\n";
-        latent_period = mp["latent_period"];
-        infectious_period = mp["infectious_period"];
-        prob_transmission = mp["prob_transmission"];
+        latent_period = mp["latent_period"][0];
+        infectious_period = mp["infectious_period"][0];
+        prob_transmission = mp["prob_transmission"][0];
         prob_death = mp["prob_death"];
         prob_immute = mp["prob_immute"];
-        vaccine_population = mp["vaccine_population"];
-        vaccine_efficiency = mp["vaccine_efficiency"];
+        vaccine_population = mp["vaccine_population"][0];
+        vaccine_efficiency = mp["vaccine_efficiency"][0];
 
-        tm.setDay(mp["simulate_day"]);
+        tm.setDay(mp["simulate_day"][0]);
 
         I.setAvgPeriod(infectious_period);
         E.setAvgPeriod(latent_period);
@@ -99,21 +99,7 @@ protected:
         }
     }   
 
-    Nodes infection(SuspictibleState& Sus, uint period, double prob_trans) {
-        //std::cout << "one infection\n";
-        // Nodes sus2i;
-        // for (uint i = 0; i < I.size(); ++i) {
-        //     Node u = I[i];
-        //     for (auto cgp : u.getGroups()[period]) {          
-        //         Nodes tmp = Sus.infected(u.getAge(), cgp, prob_transmission);
-        //         while (tmp.size()) {
-        //             sus2i.push_back(tmp.back());
-        //             tmp.pop_back();
-        //         }
-        //     }
-        // }
-        // return sus2i;
-        //std::cout << "prob trans " << prob_trans << '\n';
+    inline Nodes infection(SuspictibleState& Sus, uint period, double prob_trans) {
         Nodes sus2i;
         for (uint i = 0; i < I.size(); ++i) {
             Nodes tmp = Sus.infected(I[i], period, prob_trans);
@@ -122,7 +108,7 @@ protected:
         return sus2i;
     }
 
-    Nodes vaccination() {
+    inline Nodes vaccination() {
         //std::cout << "vaccination\n";
         static uint vacc_idx = 0;
         Nodes re;
@@ -142,17 +128,19 @@ protected:
     }
 
     void simulate_unit(const Time::TimeStep& ts) {
-        std::cout << "----simulate unit " << ts.getDay() << ' ' << ts.getPeriod() << "----\n";
+        //std::cout << "----simulate unit " << ts.getDay() << ' ' << ts.getPeriod() << "----\n";
+        
         Nodes s2e = infection(S, ts.getPeriod(), prob_transmission);
         Nodes f2e = infection(F, ts.getPeriod(), prob_transmission);
 
         Nodes e2i = E.expire();
         Nodes i2frd = I.expire(), i2f, i2r, i2d;
         for (const auto& v : i2frd) {
-            if (Random::trail(prob_death)) {
+            double pd = prob_death[v.getAge()];
+            if (Random::trail(pd)) {
                 i2d.push_back(v);
             }
-            else if (Random::trail(prob_immute / (1 - prob_death))) {
+            else if (Random::trail(prob_immute[v.getAge()] / (1 - pd))) {
                 i2r.push_back(v);
             }
             else {
@@ -207,8 +195,8 @@ protected:
     double latent_period;
     double infectious_period;
     double prob_transmission;
-    double prob_death;
-    double prob_immute;
+    std::vector<double> prob_death;
+    std::vector<double> prob_immute;
 };
 
 #endif

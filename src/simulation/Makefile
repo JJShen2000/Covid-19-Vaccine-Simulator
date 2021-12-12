@@ -4,9 +4,9 @@ TARGETS = sfeirvd_aon sfeirvd_leaky
 
 all: sfeirvd_aon sfeirvd_leaky
 
-sfeirvd_aon: run/run_sfeirvd_aon.cpp Node.cpp ContactGroup.cpp
+sfeirvd_aon: run/run_sfeirvd_aon.cpp
 	$(CC) $^ -o $@ $(CXXFLAGS)
-sfeirvd_leaky: run/run_sfeirvd_leaky.cpp Node.cpp ContactGroup.cpp
+sfeirvd_leaky: run/run_sfeirvd_leaky.cpp
 	$(CC) $^ -o $@ $(CXXFLAGS)
 
 .PHONY: clean

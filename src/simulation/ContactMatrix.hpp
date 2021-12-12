@@ -3,8 +3,7 @@
 
 #include <vector>
 
-#include "Uint.hpp"
-#include "Age.hpp"
+#include "Type.hpp"
 
 struct Matrix {
     void setSize(uint n) {
@@ -31,9 +30,11 @@ protected:
     Matrix* inst;
 };
 
-class ContactMatrixPool : public std::vector<Matrix> {
-public:
+using ContactMatrixPool = std::vector<Matrix>;
 
-};
+// class ContactMatrixPool : public std::vector<Matrix> {
+// public:
+
+// };
 
 #endif

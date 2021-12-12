@@ -3,18 +3,18 @@
 
 #include <vector>
 
-#include "BaseState.hpp"
+//#include "BaseState.hpp"
 
-class StableState : public BaseState, Nodes {
+class StableState {
 public:
 
-    virtual void insert(const Node& node) override {
-#ifdef DEBUG
-        std::cout << "--insert state Stable " << node.getID() << '\n';
-#endif
-        push_back(node);
+    inline void insert(const Node& node) {
+        //Nodes::push_back(node);
     }
 
+    inline void insert(const Nodes& nds) {
+        //Nodes::insert(Nodes::end(), nds.begin(), nds.end());
+    }
 };
 
 #endif
