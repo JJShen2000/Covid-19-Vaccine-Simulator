@@ -64,14 +64,16 @@ public:
 
             std::vector<uint> amt = gctn.choose_hypergeometric(k);
             for (uint i = 0; i < amt.size(); ++i) {
-                uint n = amt[i];
-                for (uint j = 0; j < amt[i]; ++j) {
-                    double p = gctn.getContactGroup().getContactMatrix().getRate(src.getAge(), i) * ptrans;
-                    n -= Random::trail(1 - p / dom);
-                    // if (Random::trail(1 - p / dom)) {
-                    //     --n;
-                    // }
-                }
+                double p = gctn.getContactGroup().getContactMatrix().getRate(src.getAge(), i) * ptrans;
+                uint n = Random::bino_dis(amt[i], p / dom);
+                // uint n = amt[i];
+                // for (uint j = 0; j < amt[i]; ++j) {
+                //     double p = gctn.getContactGroup().getContactMatrix().getRate(src.getAge(), i) * ptrans;
+                //     n -= Random::trail(1 - p / dom);
+                //     // if (Random::trail(1 - p / dom)) {
+                //     //     --n;
+                //     // }
+                // }
                 if (n == 0) continue;
                 //std::cout << 'n' << n << '\n';
 

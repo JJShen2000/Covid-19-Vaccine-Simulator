@@ -36,6 +36,10 @@ public:
         return std::exponential_distribution<double>(lambda)(Random::gen);
     }
 
+    inline static uint bino_dis(uint n, double p) {
+        return std::binomial_distribution<uint>(n, p)(Random::gen);
+    }
+
 protected:
     static std::default_random_engine gen;
 };
