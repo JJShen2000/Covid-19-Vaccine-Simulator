@@ -5,6 +5,7 @@
 
 //#define DETAIL
 #define SHOW
+//#define CHANGES
 
 #include "SFEIRVDModel.hpp"
 
@@ -103,6 +104,49 @@ protected:
             --icnt[v.getLocation()];
             ++dcnt[v.getLocation()];
         }
+
+        #ifdef CHANGES
+        std::cout << "s2f" << ' ';
+        for (const auto& v : s2f) {
+            std::cout << v.getID() << ' ';
+        }
+        std::cout << '\n';
+        std::cout << "s2v" << ' ';
+        for (const auto& v : s2v) {
+            std::cout << v.getID() << ' ';
+        }
+        std::cout << '\n';
+        std::cout << "s2e" << ' ';
+        for (const auto& v : s2e) {
+            std::cout << v.getID() << ' ';
+        }
+        std::cout << '\n';
+        std::cout << "f2e" << ' ';
+        for (const auto& v : f2e) {
+            std::cout << v.getID() << ' ';
+        }
+        std::cout << '\n';
+        std::cout << "e2i" << ' ';
+        for (const auto& v : e2i) {
+            std::cout << v.getID() << ' ';
+        }
+        std::cout << '\n';
+        std::cout << "i2f" << ' ';
+        for (const auto& v : i2f) {
+            std::cout << v.getID() << ' ';
+        }
+        std::cout << '\n';
+        std::cout << "i2r" << ' ';
+        for (const auto& v : i2r) {
+            std::cout << v.getID() << ' ';
+        }
+        std::cout << '\n';
+        std::cout << "i2d" << ' ';
+        for (const auto& v : i2d) {
+            std::cout << v.getID() << ' ';
+        }
+        std::cout << '\n';
+        #endif
 
         #ifdef SHOW
         icnts += e2i.size() - i2f.size() - i2r.size() - i2d.size();

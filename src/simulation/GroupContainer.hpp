@@ -28,8 +28,7 @@ public:
         return sz;
     }
 
-    Nodes choose(uint k) {
-        //std::cout << "gp ctn choose " << k << '\n';
+    std::vector<uint> choose_hypergeometric(uint k) const {
         std::vector<uint> amt(ageSize());
         for (uint i = 0; i < k; ++i) {
             uint all = sz - i;
@@ -41,17 +40,33 @@ public:
                 all -= at(j).size() - amt[j];
             }
         }
-
-        Nodes re;
-        for (uint i = 0; i < ageSize(); ++i) {
-            if (amt[i]) {
-                Nodes tmp = at(i).randomChoose(amt[i]);
-                re.insert(re.end(), tmp.begin(), tmp.end());    
-            }
-        }
-
-        return re;
+        return amt;
     }
+
+    // Nodes choose(uint k) {
+    //     //std::cout << "gp ctn choose " << k << '\n';
+    //     std::vector<uint> amt(ageSize());
+    //     for (uint i = 0; i < k; ++i) {
+    //         uint all = sz - i;
+    //         for (uint j = 0; j < ageSize(); ++j) {
+    //             if (Random::trail((at(j).size() - amt[j]) / (double) all)) {
+    //                 ++amt[j];
+    //                 break;
+    //             }
+    //             all -= at(j).size() - amt[j];
+    //         }
+    //     }
+
+    //     Nodes re;
+    //     for (uint i = 0; i < ageSize(); ++i) {
+    //         if (amt[i]) {
+    //             Nodes tmp = at(i).randomChoose(amt[i]);
+    //             re.insert(re.end(), tmp.begin(), tmp.end());    
+    //         }
+    //     }
+
+    //     return re;
+    // }
 
     inline double getPmax(Age src) const {
         double p = 0;
