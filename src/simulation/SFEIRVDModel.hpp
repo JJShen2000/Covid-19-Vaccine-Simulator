@@ -7,7 +7,7 @@
 #include <string>
 #include <fstream>
 
-#include "SuspictibleState.hpp"
+#include "SusceptibleState.hpp"
 #include "ExpiringState.hpp"
 #include "StableState.hpp"
 

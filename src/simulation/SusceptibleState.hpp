@@ -1,5 +1,5 @@
-#ifndef SUSPICTIBLESTATE_HPP
-#define SUSPICTIBLESTATE_HPP
+#ifndef SUSCEPTIBLESTATE_HPP
+#define SUSCEPTIBLESTATE_HPP
 
 #include <vector>
 #include <iostream>
