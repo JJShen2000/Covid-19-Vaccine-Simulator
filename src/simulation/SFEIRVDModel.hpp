@@ -43,7 +43,7 @@ protected:
         //std::cout << "init param\n";
         latent_period = mp["latent_period"][0];
         infectious_period = mp["infectious_period"][0];
-        prob_transmission = mp["prob_transmission"][0];
+        prob_transmission = mp["prob_transmission"];
         prob_death = mp["prob_death"];
         prob_immute = mp["prob_immute"];
         vaccine_population = mp["vaccine_population"][0];
@@ -198,7 +198,7 @@ protected:
     double vaccine_efficiency;
     double latent_period;
     double infectious_period;
-    double prob_transmission;
+    std::vector<double> prob_transmission;
     std::vector<double> prob_death;
     std::vector<double> prob_immute;
 };

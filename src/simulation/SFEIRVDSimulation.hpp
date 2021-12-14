@@ -20,18 +20,18 @@ public:
 
 protected:
     virtual void statisticInit() override {
-        allcnt.resize(N_lc);
-        scnt.resize(N_lc);
-        fcnt.resize(N_lc);
-        ecnt.resize(N_lc);
-        icnt.resize(N_lc);
-        rcnt.resize(N_lc);
-        vcnt.resize(N_lc);
-        dcnt.resize(N_lc);
+        allcnt.resize(N_lc, std::vector<uint>(N_ag));
+        scnt.resize(N_lc, std::vector<uint>(N_ag));
+        fcnt.resize(N_lc, std::vector<uint>(N_ag));
+        ecnt.resize(N_lc, std::vector<uint>(N_ag));
+        icnt.resize(N_lc, std::vector<uint>(N_ag));
+        rcnt.resize(N_lc, std::vector<uint>(N_ag));
+        vcnt.resize(N_lc, std::vector<uint>(N_ag));
+        dcnt.resize(N_lc, std::vector<uint>(N_ag));
         for (auto& v : ndp) {
-            ++allcnt[v.loc];
-            if (v.stateID == 'I') ++icnt[v.loc];
-            else ++scnt[v.loc];
+            ++allcnt[v.loc][v.age];
+            if (v.stateID == 'I') ++icnt[v.loc][v.age];
+            else ++scnt[v.loc][v.age];
         }
 
         #ifdef SHOW
@@ -73,36 +73,36 @@ protected:
     virtual void statisticUnit(const Time::TimeStep& ts, const Nodes& s2f, const Nodes& s2v, const Nodes& s2e, const Nodes& f2e, const Nodes& e2i, const Nodes& i2f, const Nodes& i2r, const Nodes& i2d) override {
         //std::cout << "statistic unit\n";
         for (const auto& v : s2f) {
-            --scnt[v.getLocation()];
-            ++fcnt[v.getLocation()];
+            --scnt[v.getLocation()][v.getAge()];
+            ++fcnt[v.getLocation()][v.getAge()];
         }
         for (const auto& v : s2v) {
-            --scnt[v.getLocation()];
-            ++vcnt[v.getLocation()];
+            --scnt[v.getLocation()][v.getAge()];
+            ++vcnt[v.getLocation()][v.getAge()];
         }
         for (const auto& v : s2e) {
-            --scnt[v.getLocation()];
-            ++ecnt[v.getLocation()];
+            --scnt[v.getLocation()][v.getAge()];
+            ++ecnt[v.getLocation()][v.getAge()];
         }
         for (const auto& v : f2e) {
-            --fcnt[v.getLocation()];
-            ++ecnt[v.getLocation()];
+            --fcnt[v.getLocation()][v.getAge()];
+            ++ecnt[v.getLocation()][v.getAge()];
         }
         for (const auto& v : e2i) {
-            --ecnt[v.getLocation()];
-            ++icnt[v.getLocation()];
+            --ecnt[v.getLocation()][v.getAge()];
+            ++icnt[v.getLocation()][v.getAge()];
         }
         for (const auto& v : i2f) {
-            --icnt[v.getLocation()];
-            ++fcnt[v.getLocation()];
+            --icnt[v.getLocation()][v.getAge()];
+            ++fcnt[v.getLocation()][v.getAge()];
         }
         for (const auto& v : i2r) {
-            --icnt[v.getLocation()];
-            ++rcnt[v.getLocation()];
+            --icnt[v.getLocation()][v.getAge()];
+            ++rcnt[v.getLocation()][v.getAge()];
         }
         for (const auto& v : i2d) {
-            --icnt[v.getLocation()];
-            ++dcnt[v.getLocation()];
+            --icnt[v.getLocation()][v.getAge()];
+            ++dcnt[v.getLocation()][v.getAge()];
         }
 
         #ifdef CHANGES
@@ -213,6 +213,7 @@ protected:
         //fout << "\"Period\",\"Town\",\"num_infection\",\"num_dead\",\"ratio_infection\",\"ratio_dead\"\n";
         fout << "\"Period\"" << ',';
         fout << "\"Town\"" << ',';
+        fout << "\"Age\"" << ',';
 
         fout << "\"num_susceptible\"" << ',';
         fout << "\"num_failed\"" << ',';
@@ -237,16 +238,19 @@ protected:
 
     void writeUnit(uint p) {
         for (uint i = 0; i < N_lc; ++i) {
-            double sratio = scnt[i] / (double)allcnt[i];
-            double fratio = fcnt[i] / (double)allcnt[i];
-            double eratio = ecnt[i] / (double)allcnt[i];
-            double iratio = icnt[i] / (double)allcnt[i];
-            double rratio = rcnt[i] / (double)allcnt[i];
-            double vratio = vcnt[i] / (double)allcnt[i];
-            double dratio = dcnt[i] / (double)allcnt[i];
-            fout << p << ',' << i << ',';
-            fout << scnt[i] << ',' << fcnt[i] << ',' << ecnt[i] << ',' << icnt[i] << ',' << rcnt[i] << ',' << vcnt[i] << ',' << dcnt[i] << ',';
-            fout << sratio  << ',' << fratio  << ',' << eratio  << ',' << iratio  << ',' << rratio  << ',' << vratio << ','  << dratio  << '\n';
+            for (uint j = 0; j < N_ag; ++j) {
+                double sratio = scnt[i][j] / (double)allcnt[i][j];
+                double fratio = fcnt[i][j] / (double)allcnt[i][j];
+                double eratio = ecnt[i][j] / (double)allcnt[i][j];
+                double iratio = icnt[i][j] / (double)allcnt[i][j];
+                double rratio = rcnt[i][j] / (double)allcnt[i][j];
+                double vratio = vcnt[i][j] / (double)allcnt[i][j];
+                double dratio = dcnt[i][j] / (double)allcnt[i][j];
+                fout << p << ',' << i << ',' << j << ',';
+                fout << scnt[i][j] << ',' << fcnt[i][j] << ',' << ecnt[i][j] << ',' << icnt[i][j] << ',' << rcnt[i][j] << ',' << vcnt[i][j] << ',' << dcnt[i][j] << ',';
+                fout << sratio  << ',' << fratio  << ',' << eratio  << ',' << iratio  << ',' << rratio  << ',' << vratio << ','  << dratio  << '\n';
+            
+            }
         }
 
         #ifdef SHOW
@@ -273,7 +277,7 @@ protected:
     #endif
 
     std::ofstream fout;
-    std::vector<uint> allcnt, icnt, scnt, fcnt, rcnt, ecnt, vcnt, dcnt;
+    std::vector<std::vector<uint>> allcnt, icnt, scnt, fcnt, rcnt, ecnt, vcnt, dcnt;
 };
 
 #endif

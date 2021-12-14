@@ -12,7 +12,7 @@
 #include "Random.hpp"
 #include "NodeContainer.hpp"
 
-class SetAgedGroup : public std::vector<NodeContainer> {
+class GroupContainer : public std::vector<NodeContainer> {
 public:
     inline void insert(const Node& u) {
         std::vector<NodeContainer>::at(u.getAge()).insert(u);
@@ -85,15 +85,15 @@ public:
     inline ContactGroup getContactGroup() const {
         return cgp;
     }
-protected:
 
     inline uint ageSize() const {
         return std::vector<NodeContainer>::size();
     }
+protected:
 
-    inline bool find(const Node& u) const {
-        return at(u.getAge()).find(u);
-    }
+    // inline bool find(const Node& u) const {
+    //     return at(u.getAge()).find(u);
+    // }
 
     ContactGroup cgp;
     uint sz;

@@ -44,11 +44,16 @@ protected:
         //std::cout << "init param\n";
         latent_period = mp["latent_period"][0];
         infectious_period = mp["infectious_period"][0];
-        prob_transmission = mp["prob_transmission"][0];
+        prob_transmission = mp["prob_transmission"];
         prob_death = mp["prob_death"];
         prob_immute = mp["prob_immute"];
         vaccine_population = mp["vaccine_population"][0];
         vaccine_efficiency = mp["vaccine_efficiency"][0];
+
+        prob_transmission_vacc.resize(prob_transmission.size());
+        for (uint i = 0; i < prob_transmission.size(); ++i) {
+            prob_transmission_vacc[i] = prob_transmission[i] * (1 - vaccine_efficiency);
+        }
 
         tm.setDay(mp["simulate_day"][0]);
 
@@ -99,10 +104,10 @@ protected:
         }
     }   
 
-    inline Nodes infection(SuspictibleState& Sus, uint period, double prob_trans) {
+    inline Nodes infection(SuspictibleState& Sus, uint period, const std::vector<double>& ptrans) {
         Nodes sus2i;
         for (uint i = 0; i < I.size(); ++i) {
-            Nodes tmp = Sus.infected(I[i], period, prob_trans);
+            Nodes tmp = Sus.infected(I[i], period, ptrans);
             sus2i.insert(sus2i.end(), tmp.begin(), tmp.end());
         }
         return sus2i;
@@ -168,7 +173,7 @@ protected:
 
         Nodes s2v = vaccination();
 
-        Nodes v2e = infection(V, ts.getPeriod(), prob_transmission * (1 - vaccine_efficiency));
+        Nodes v2e = infection(V, ts.getPeriod(), prob_transmission_vacc);
 
         statisticUnit(ts, v2e, s2v, s2e, f2e, e2i, i2f, i2r, i2d);
 
@@ -194,7 +199,8 @@ protected:
     double vaccine_efficiency;
     double latent_period;
     double infectious_period;
-    double prob_transmission;
+    std::vector<double> prob_transmission_vacc;
+    std::vector<double> prob_transmission;
     std::vector<double> prob_death;
     std::vector<double> prob_immute;
 };
