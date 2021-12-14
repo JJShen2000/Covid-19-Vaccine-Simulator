@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <unordered_map>
+#include <unordered_set>
 //#include <algorithm>
 #include <string>
 #include <fstream>
@@ -99,12 +100,36 @@ protected:
     }   
 
     inline Nodes infection(SuspictibleState& Sus, uint period) {
-        Nodes sus2i;
+        // Nodes sus2i;
+        // for (uint i = 0; i < I.size(); ++i) {
+        //     Nodes tmp = Sus.infected(I[i], period, prob_transmission);
+        //     sus2i.insert(sus2i.end(), tmp.begin(), tmp.end());
+        // }
+        // return sus2i;
+        
+        std::unordered_map<uint, std::vector<uint>> icnt; // contact group id
         for (uint i = 0; i < I.size(); ++i) {
-            Nodes tmp = Sus.infected(I[i], period, prob_transmission);
-            sus2i.insert(sus2i.end(), tmp.begin(), tmp.end());
+            auto u = I[i];
+            for (auto& cgp : u.getGroups()[period]) {
+                uint gid = cgp.getID();
+                if (!icnt.count(gid)) {
+                    icnt[gid].resize(N_ag);
+                }
+                ++icnt[gid][u.getAge()];
+            }
         }
-        return sus2i;
+
+        std::unordered_set<uint> sus2i; // node id
+        for (auto& p : icnt) {
+            Sus[p.first].infected(p.second, prob_transmission, sus2i);
+        }
+
+        Nodes re;
+        for (auto v : sus2i) {
+            Sus.erase(Node(&ndp[v]));
+            re.push_back(Node(&ndp[v]));
+        }
+        return re;
     }
 
     Nodes vaccination() {

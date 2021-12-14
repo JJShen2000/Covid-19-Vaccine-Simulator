@@ -105,12 +105,36 @@ protected:
     }   
 
     inline Nodes infection(SuspictibleState& Sus, uint period, const std::vector<double>& ptrans) {
-        Nodes sus2i;
+        // Nodes sus2i;
+        // for (uint i = 0; i < I.size(); ++i) {
+        //     Nodes tmp = Sus.infected(I[i], period, ptrans);
+        //     sus2i.insert(sus2i.end(), tmp.begin(), tmp.end());
+        // }
+        // return sus2i;
+
+        std::unordered_map<uint, std::vector<uint>> icnt; // contact group id
         for (uint i = 0; i < I.size(); ++i) {
-            Nodes tmp = Sus.infected(I[i], period, ptrans);
-            sus2i.insert(sus2i.end(), tmp.begin(), tmp.end());
+            auto u = I[i];
+            for (auto& cgp : u.getGroups()[period]) {
+                uint gid = cgp.getID();
+                if (!icnt.count(gid)) {
+                    icnt[gid].resize(N_ag);
+                }
+                ++icnt[gid][u.getAge()];
+            }
         }
-        return sus2i;
+
+        std::unordered_set<uint> sus2i; // node id
+        for (auto& p : icnt) {
+            Sus[p.first].infected(p.second, ptrans, sus2i);
+        }
+
+        Nodes re;
+        for (auto v : sus2i) {
+            Sus.erase(Node(&ndp[v]));
+            re.push_back(Node(&ndp[v]));
+        }
+        return re;
     }
 
     inline Nodes vaccination() {

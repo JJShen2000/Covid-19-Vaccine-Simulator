@@ -50,60 +50,60 @@ public:
         }
     }
 
-    Nodes infected(const Node& src, uint period, const std::vector<double>& ptrans) {
-        //std::cout << "sus infected by " << src.getID() << ", period " << period << '\n';
-        Nodes re;
-        //std::cout << "src " << src.getID() << '\n';
-        uint srcAge = src.getAge();
-        for (auto& cgp : src.getGroups()[period]) {      
-            //std::cout << "trace cgp " << cgp.getID() << '\n';
-            auto& gctn = std::vector<GroupContainer>::at(cgp.getID());
-            if (gctn.size() == 0) continue;
+    // Nodes infected(const Node& src, uint period, const std::vector<double>& ptrans) {
+    //     //std::cout << "sus infected by " << src.getID() << ", period " << period << '\n';
+    //     Nodes re;
+    //     //std::cout << "src " << src.getID() << '\n';
+    //     uint srcAge = src.getAge();
+    //     for (auto& cgp : src.getGroups()[period]) {      
+    //         //std::cout << "trace cgp " << cgp.getID() << '\n';
+    //         auto& gctn = std::vector<GroupContainer>::at(cgp.getID());
+    //         if (gctn.size() == 0) continue;
 
-            for (uint i = 0; i < gctn.ageSize(); ++i) {
-                double p = gctn.getContactGroup().getContactMatrix().getRate(srcAge, i) * ptrans[i];
-                uint n = Random::bino_dis(gctn[i].size(), p);
-                if (n == 0) continue;
-                //std::cout << gctn[i].size() << ' ' << p << ' ' << n << '\n';
+    //         for (uint i = 0; i < gctn.ageSize(); ++i) {
+    //             double p = gctn.getContactGroup().getContactMatrix().getRate(srcAge, i) * ptrans[i];
+    //             uint n = Random::bino_dis(gctn[i].size(), p);
+    //             if (n == 0) continue;
+    //             //std::cout << gctn[i].size() << ' ' << p << ' ' << n << '\n';
                 
-                Nodes ch = gctn[i].randomChoose(n);
-                for (auto& v : ch) {
-                    erase(v);
-                }
-                re.insert(re.end(), ch.begin(), ch.end());
-            }
+    //             Nodes ch = gctn[i].randomChoose(n);
+    //             for (auto& v : ch) {
+    //                 erase(v);
+    //             }
+    //             re.insert(re.end(), ch.begin(), ch.end());
+    //         }
 
-            // double pmax = gctn.getPmax(src.getAge()) * ptrans;
-            // uint k = std::ceil(pmax * gctn.size());
-            // double dom = k / (double)gctn.size();
+    //         // double pmax = gctn.getPmax(src.getAge()) * ptrans;
+    //         // uint k = std::ceil(pmax * gctn.size());
+    //         // double dom = k / (double)gctn.size();
 
-            // std::vector<uint> amt = gctn.choose_hypergeometric(k);
-            // for (uint i = 0; i < amt.size(); ++i) {
-            //     double p = gctn.getContactGroup().getContactMatrix().getRate(src.getAge(), i) * ptrans[i];
-            //     uint n = Random::bino_dis(amt[i], p / dom);
-            //     // uint n = amt[i];
-            //     // for (uint j = 0; j < amt[i]; ++j) {
-            //     //     double p = gctn.getContactGroup().getContactMatrix().getRate(src.getAge(), i) * ptrans;
-            //     //     n -= Random::trail(1 - p / dom);
-            //     //     // if (Random::trail(1 - p / dom)) {
-            //     //     //     --n;
-            //     //     // }
-            //     // }
-            //     if (n == 0) continue;
-            //     //std::cout << 'n' << n << '\n';
+    //         // std::vector<uint> amt = gctn.choose_hypergeometric(k);
+    //         // for (uint i = 0; i < amt.size(); ++i) {
+    //         //     double p = gctn.getContactGroup().getContactMatrix().getRate(src.getAge(), i) * ptrans[i];
+    //         //     uint n = Random::bino_dis(amt[i], p / dom);
+    //         //     // uint n = amt[i];
+    //         //     // for (uint j = 0; j < amt[i]; ++j) {
+    //         //     //     double p = gctn.getContactGroup().getContactMatrix().getRate(src.getAge(), i) * ptrans;
+    //         //     //     n -= Random::trail(1 - p / dom);
+    //         //     //     // if (Random::trail(1 - p / dom)) {
+    //         //     //     //     --n;
+    //         //     //     // }
+    //         //     // }
+    //         //     if (n == 0) continue;
+    //         //     //std::cout << 'n' << n << '\n';
 
-            //     auto ch = gctn[i].randomChoose(n);
-            //     for (auto& v : ch) {
-            //         //gctn[i].erase(v);
-            //         erase(v);
-            //         //std::cout << "erase " << i << ' ' << v.getID() << '\n';
-            //     }
-            //     re.insert(re.end(), ch.begin(), ch.end());
-            // }
+    //         //     auto ch = gctn[i].randomChoose(n);
+    //         //     for (auto& v : ch) {
+    //         //         //gctn[i].erase(v);
+    //         //         erase(v);
+    //         //         //std::cout << "erase " << i << ' ' << v.getID() << '\n';
+    //         //     }
+    //         //     re.insert(re.end(), ch.begin(), ch.end());
+    //         // }
 
-        }
-        return re;
-    }
+    //     }
+    //     return re;
+    // }
 };
 
 #endif

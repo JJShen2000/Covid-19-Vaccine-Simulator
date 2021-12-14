@@ -3,12 +3,12 @@
 
 #include <cstdint>
 
-using Age = uint32_t;
-using Location = uint32_t;
+using Age = unsigned int;
+using Location = unsigned int;
 
-using Day = uint32_t;
-using Period = uint32_t;
+using Day = unsigned int;
+using Period = unsigned int;
 
-using uint = uint32_t;
+using uint = unsigned int;
 
 #endif

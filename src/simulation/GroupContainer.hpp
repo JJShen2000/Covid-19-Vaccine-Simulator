@@ -2,7 +2,8 @@
 #define GROUPCONTAINER_HPP
 
 //#include <algorithm>
-//#include <unordered_set>
+#include <unordered_set>
+#include <cmath>
 
 //#include "Debug.hpp"
 
@@ -41,6 +42,19 @@ public:
             }
         }
         return amt;
+    }
+
+    void infected(const vector<uint>& src_cnt, const std::vector<double>& ptrans, std::unordered_set<uint>& infected_node) {
+        for (uint v = 0; v < ageSize(); ++v) {
+            auto& nctn = std::vector<NodeContainer>::at(v);
+            double p = 1;
+            for (uint u = 0; u < ageSize(); ++u) {
+                p *= std::pow(1 - cgp.getContactMatrix().getRate(u, v) * ptrans[v], src_cnt[u]);
+            }
+            for (auto& nd : nctn.randomChoose(Random::bino_dis(nctn.size(), 1 - p))) {
+                infected_node.insert(nd.getID());
+            }
+        }
     }
 
     // Nodes choose(uint k) {
