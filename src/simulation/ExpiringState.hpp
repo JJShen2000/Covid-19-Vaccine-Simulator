@@ -54,14 +54,14 @@ public:
     }
 
     void setAvgPeriod(double val) {
-        avg_rate = 1 / val;
+        avg_rate_m1 = 1 / (val - 1);
     }
 
 protected:
     uint setExpiringTime(const Node&) const {
-        return std::ceil(Random::exp_dis(avg_rate));
+        return 1 + std::ceil(Random::exp_dis(avg_rate_m1));
     }
-    double avg_rate;
+    double avg_rate_m1;
 };
 
 #endif
