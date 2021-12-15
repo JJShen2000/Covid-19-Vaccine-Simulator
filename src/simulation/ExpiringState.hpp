@@ -13,17 +13,10 @@
 class ExpiringState : public std::vector<std::pair<Node, uint>> {
 public:
     void insert(const Node& u) {
-#ifdef DEBUG
-        std::cout << "--insert state infec " << u.getID() << '\n';
-#endif
-        uint expt = setExpiringTime(u);
-#ifdef DEBUG
-        std::cout << "----insert " << u.getID() << " with exp period " << expt << '\n';
-#endif
-        std::vector<std::pair<Node, uint>>::push_back({u, expt});
+        std::vector<std::pair<Node, uint>>::push_back({u, setExpiringTime(u)});
     }
 
-    void insert(const Nodes& nds) {
+    inline void insert(const Nodes& nds) {
         for (auto& v : nds) {
             insert(v);
         }
@@ -45,15 +38,15 @@ public:
         return exp;
     }
 
-    uint size() const {
+    inline uint size() const {
         return std::vector<std::pair<Node, uint>>::size();
     }
 
-    Node& operator[](uint i) {
+    inline Node& operator[](uint i) {
         return std::vector<std::pair<Node, uint>>::at(i).first;
     }
 
-    void setAvgPeriod(double val) {
+    inline void setAvgPeriod(double val) {
         avg_rate_m1 = 1 / (val - 1);
     }
 

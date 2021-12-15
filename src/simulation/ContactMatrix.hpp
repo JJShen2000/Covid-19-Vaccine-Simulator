@@ -6,11 +6,11 @@
 #include "Type.hpp"
 
 struct Matrix {
-    void setSize(uint n) {
+    inline void setSize(uint n) {
         cm = std::vector<std::vector<double>>(n, std::vector<double>(n));
     }
 
-    void setRate(Age u, Age v, double p) {
+    inline void setRate(Age u, Age v, double p) {
         cm[u][v] = p;
     }
 

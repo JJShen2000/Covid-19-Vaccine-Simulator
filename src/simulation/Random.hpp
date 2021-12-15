@@ -15,9 +15,9 @@ public:
         return std::uniform_real_distribution<double>(0.0, 1.0)(Random::gen) <= d;
     }
 
-    inline static int uniform(int l, int r) {
-        return std::uniform_int_distribution<uint>(l, r)(Random::gen);
-    }
+    // inline static int uniform(int l, int r) {
+    //     return std::uniform_int_distribution<uint>(l, r)(Random::gen);
+    // }
 
     inline static std::vector<uint> choose(unsigned int n, unsigned int k) {
         // if (k > n) {

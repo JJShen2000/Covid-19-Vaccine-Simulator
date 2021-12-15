@@ -14,21 +14,24 @@ class NodeContainer : public index_set<Node> {
 public:
 
     inline void insert(const Node& v) {
-        sz += index_set<Node>::insert(v).second;
+        index_set<Node>::insert(v);
+        //sz += index_set<Node>::insert(v).second;
     }
 
     inline void erase(const Node& v) {
-        sz -= index_set<Node>::erase(v);
+        index_set<Node>::erase(v);
+        //sz -= index_set<Node>::erase(v);
         //if (res) --sz;
     }
 
     inline uint size() const {
-        return sz;
+        return index_set<Node>::size();
+        //return sz;
     }
 
-    inline bool find(const Node& v) const {
-        return index_set<Node>::find(v) != index_set<Node>::end();
-    }
+    // inline bool find(const Node& v) const {
+    //     return index_set<Node>::find(v) != index_set<Node>::end();
+    // }
 
     inline Nodes randomChoose(uint k) {
         //std::cout << "nd ctn choose " << k << '\n';
@@ -40,8 +43,8 @@ public:
         return re;
     }
 
-protected:
-    uint sz = 0;
+// protected:
+//     uint sz = 0;
 };
 
 #endif
