@@ -52,8 +52,8 @@ protected:
 
         tm.setDay(mp["simulate_day"][0]);
 
-        I.setAvgPeriod(infectious_period);
-        E.setAvgPeriod(latent_period);
+        I.setAvgPeriod(infectious_period * tm.getPeriods());
+        E.setAvgPeriod(latent_period * tm.getPeriods());
     }
 
     void loadVaccineOrder(std::istream& in_vacc) {
