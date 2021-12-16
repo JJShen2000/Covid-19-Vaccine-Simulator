@@ -16,12 +16,12 @@
 class GroupContainer : public std::vector<NodeContainer> {
 public:
     inline void insert(const Node& u) {
-        std::vector<NodeContainer>::at(u.getAge()).insert(u);
+        std::vector<NodeContainer>::at(u.getAge()).insert(u.getID());
         //++sz;
     }
 
     inline void erase(const Node& u) {
-        std::vector<NodeContainer>::at(u.getAge()).erase(u);
+        std::vector<NodeContainer>::at(u.getAge()).erase(u.getID());
         //--sz;
     }
 
@@ -51,8 +51,8 @@ public:
             for (uint u = 0; u < ageSize(); ++u) {
                 p *= std::pow(1 - cgp.getContactMatrix().getRate(u, v) * ptrans[v], src_cnt[u]);
             }
-            for (auto& nd : nctn.randomChoose(Random::bino_dis(nctn.size(), 1 - p))) {
-                infected_node.insert(nd.getID());
+            for (auto& nid : nctn.randomChoose(Random::bino_dis(nctn.size(), 1 - p))) {
+                infected_node.insert(nid);
             }
         }
     }

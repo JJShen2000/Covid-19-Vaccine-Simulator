@@ -5,7 +5,7 @@
 
 //#define DETAIL
 #define SHOW
-//#define CHANGES
+// #define CHANGES
 
 #include "SFEIRVDModel.hpp"
 
@@ -106,46 +106,62 @@ protected:
         }
 
         #ifdef CHANGES
-        std::cout << "s2f" << ' ';
-        for (const auto& v : s2f) {
-            std::cout << v.getID() << ' ';
+        if (s2f.size()) {
+            std::cout << "s2f" << ' ';
+            for (const auto& v : s2f) {
+                std::cout << v.getID() << ' ';
+            }    
+            std::cout << '\n';
         }
-        std::cout << '\n';
-        std::cout << "s2v" << ' ';
-        for (const auto& v : s2v) {
-            std::cout << v.getID() << ' ';
+        if (s2v.size()) {
+            std::cout << "s2v" << ' ';
+            for (const auto& v : s2v) {
+                std::cout << v.getID() << ' ';
+            }    
+            std::cout << '\n';
         }
-        std::cout << '\n';
-        std::cout << "s2e" << ' ';
-        for (const auto& v : s2e) {
-            std::cout << v.getID() << ' ';
+        if (s2e.size()) {
+            std::cout << "s2e" << ' ';
+            for (const auto& v : s2e) {
+                std::cout << v.getID() << ' ';
+            }
+            std::cout << '\n';    
         }
-        std::cout << '\n';
-        std::cout << "f2e" << ' ';
-        for (const auto& v : f2e) {
-            std::cout << v.getID() << ' ';
+        if (f2e.size()) {
+            std::cout << "f2e" << ' ';
+            for (const auto& v : f2e) {
+                std::cout << v.getID() << ' ';
+            }
+            std::cout << '\n';    
         }
-        std::cout << '\n';
-        std::cout << "e2i" << ' ';
-        for (const auto& v : e2i) {
-            std::cout << v.getID() << ' ';
+        if (e2i.size()) {
+            std::cout << "e2i" << ' ';
+            for (const auto& v : e2i) {
+                std::cout << v.getID() << ' ';
+            }
+            std::cout << '\n';    
         }
-        std::cout << '\n';
-        std::cout << "i2f" << ' ';
-        for (const auto& v : i2f) {
-            std::cout << v.getID() << ' ';
+        if (i2f.size()) {
+            std::cout << "i2f" << ' ';
+            for (const auto& v : i2f) {
+                std::cout << v.getID() << ' ';
+            }
+            std::cout << '\n';    
         }
-        std::cout << '\n';
-        std::cout << "i2r" << ' ';
-        for (const auto& v : i2r) {
-            std::cout << v.getID() << ' ';
+        if (i2r.size()) {
+            std::cout << "i2r" << ' ';
+            for (const auto& v : i2r) {
+                std::cout << v.getID() << ' ';
+            }
+            std::cout << '\n';    
         }
-        std::cout << '\n';
-        std::cout << "i2d" << ' ';
-        for (const auto& v : i2d) {
-            std::cout << v.getID() << ' ';
+        if (i2d.size()) {
+            std::cout << "i2d" << ' ';
+            for (const auto& v : i2d) {
+                std::cout << v.getID() << ' ';
+            }
+            std::cout << '\n';    
         }
-        std::cout << '\n';
         #endif
 
         #ifdef SHOW

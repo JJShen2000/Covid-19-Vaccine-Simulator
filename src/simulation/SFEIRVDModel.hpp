@@ -62,7 +62,7 @@ protected:
         in_vacc >> n;
         for (uint i = 0; i < n; ++i) {
             in_vacc >> nid;
-            vacc_order.push_back(Node(&ndp[nid]));
+            vacc_order.push_back(nid);
         }
     }
 
@@ -138,12 +138,18 @@ protected:
         Nodes re;
         uint cnt = 0;
         while (cnt < vaccine_population && vacc_idx < vacc_order.size()) {
-            Node cur = vacc_order[vacc_idx];
+            uint cur = vacc_order[vacc_idx];
             //std::cout << "try vacc " << cur.getID() << '\n';
-            if (cur.getState() == 'S') {
-                //std::cout << "vacc " << cur.getID() << '\n';
-                S.erase(cur);
-                re.push_back(cur);
+            // if (cur.getState() == 'S') {
+            //     //std::cout << "vacc " << cur.getID() << '\n';
+            //     S.erase(cur);
+            //     re.push_back(cur);
+            //     ++cnt;
+            // }
+            if (ndp[cur].stateID == 'S') {
+                Node nd(&ndp[cur]);
+                S.erase(nd);
+                re.push_back(nd);
                 ++cnt;
             }
             ++vacc_idx;
@@ -217,7 +223,7 @@ protected:
     ExpiringState E, I;
     StableState R, V, D;
 
-    Nodes vacc_order;
+    std::vector<uint> vacc_order;
 
     uint vaccine_population;
     double vaccine_efficiency;
