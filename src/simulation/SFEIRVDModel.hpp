@@ -195,16 +195,19 @@ protected:
         i2d.setState('D');
         D.insert(i2d);
 
-        Nodes s2fv = vaccination(), s2f, s2v;
-        for (const auto& v : s2fv) {
-            if (Random::trail(vaccine_efficiency)) {
-                s2v.push_back(v);
-            }
-            else {
-                s2f.push_back(v);
-            }
+        Nodes s2fv, s2f, s2v;
+        if (ts.getPeriod() == 0) {
+            s2fv = vaccination();
+            for (const auto& v : s2fv) {
+                if (Random::trail(vaccine_efficiency)) {
+                    s2v.push_back(v);
+                }
+                else {
+                    s2f.push_back(v);
+                }
+            }    
         }
-
+        
         statisticUnit(ts, s2f, s2v, s2e, f2e, e2i, i2f, i2r, i2d);
 
         s2f.setState('F');
