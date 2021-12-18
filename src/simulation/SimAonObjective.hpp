@@ -24,9 +24,14 @@ protected:
         accum_icnt.resize(N_lc, std::vector<uint>(N_ag));
         vcnt.resize(N_lc, std::vector<uint>(N_ag));
         dcnt.resize(N_lc, std::vector<uint>(N_ag));
+        have_infected.resize(N_nd);
+
         for (auto& v : ndp) {
             ++allcnt[v.loc][v.age];
-            if (v.stateID == 'I') ++accum_icnt[v.loc][v.age];
+            if (v.stateID == 'I') {
+                ++accum_icnt[v.loc][v.age];
+                have_infected[v.id] = 1;
+            }
         }
 
         #ifdef SHOW
@@ -88,10 +93,16 @@ protected:
             ++vcnt[v.getLocation()][v.getAge()];
         }
         for (const auto& v : s2e) {
-            ++accum_icnt[v.getLocation()][v.getAge()];
+            if (!have_infected[v.getID()]) {
+                ++accum_icnt[v.getLocation()][v.getAge()];
+                have_infected[v.getID()] = 1;
+            }
         }
         for (const auto& v : f2e) {
-            ++accum_icnt[v.getLocation()][v.getAge()];
+            if (!have_infected[v.getID()]) {
+                ++accum_icnt[v.getLocation()][v.getAge()];
+                have_infected[v.getID()] = 1;
+            }
         }
         for (const auto& v : i2d) {
             ++dcnt[v.getLocation()][v.getAge()];
@@ -299,6 +310,7 @@ protected:
 
     std::ofstream fout;
     std::vector<std::vector<uint>> allcnt, accum_icnt, vcnt, dcnt;
+    std::vector<bool> have_infected;
 };
 
 #endif
