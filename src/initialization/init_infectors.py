@@ -8,7 +8,7 @@ for i in range(len(df_tracts)):
     tract_dict[tract_name] = i
 
 num_infected_each_tract = dict()
-df_tract_infectors = pd.read_csv('../data_process/raw_data/tract_init_infectors.csv', header=None)
+df_tract_infectors = pd.read_csv('../../input/init_infector/tract_init_infectors.csv', header=None)
 for _, df_row in df_tract_infectors.iterrows():
     tract_code = tract_dict[df_row[0]]
     num_infected = int(df_row[1])

@@ -2,9 +2,10 @@
 #define SIMAONOBJECTIVE_HPP
 
 #include <set>
+using namespace std;
 
 //  #define DETAIL
-#define SHOW
+//#define SHOW
 // #define CHANGES
 
 #include "SFEIRVDModel.hpp"
@@ -191,22 +192,24 @@ protected:
         } 
 
         uint p = ts.getDay() * ts.getPeriodLength() + ts.getPeriod() + 1;
+        uint temp = 0;
 
         for (uint i = 0; i < N_lc; ++i) {
             for (uint j = 0; j < N_ag; ++j) {
                 fout << p << ',' << i << ',' << j << ',';
                 fout << cur_death[i][j] << ',' << cur_infec[i][j] << ',';
                 fout << dcnt[i][j] << ',' << accum_icnt[i][j] << ',' << vcnt[i][j] << ',';
+                temp += cur_infec[i][j];
 
                 double dratio = dcnt[i][j] / (double)allcnt[i][j];
                 double accum_iratio = accum_icnt[i][j] / (double)allcnt[i][j];
                 double vratio = vcnt[i][j] / (double)allcnt[i][j];
                 fout << dratio << ',' << accum_iratio << ',' << vratio << '\n';
-            
             }
         }
+        cout << p << '\t' << temp << '\n';
 
-        #ifdef SHOW
+#ifdef SHOW
         std::cout << p << "\t\t" << scnts << "\t\t" << fcnts << "\t\t" << ecnts << "\t\t" << icnts << "\t\t" << rcnts << "\t\t" << vcnts << "\t\t" << dcnts << "\n";
         #endif
 

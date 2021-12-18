@@ -19,7 +19,7 @@ def create_dump_dir():
         os.mkdir('../../data/vis_data')
 
 def get_census_tracts():
-    with open('./raw_data/age_population_raw.csv') as rcsv:
+    with open('../../input/age_population_raw.csv') as rcsv:
         data = csv.reader(rcsv)
         next(data)
 
@@ -43,7 +43,7 @@ def get_census_tracts():
                 writer.writerow([city, id_census_tracts[id]])
 
 def get_age_population():
-    with open('./raw_data/age_population_raw.csv') as rcsv:
+    with open('../../input/age_population_raw.csv') as rcsv:
         data = csv.reader(rcsv)
         next(data)
         
@@ -66,7 +66,7 @@ def get_age_population():
                 writer.writerow([city, loc, age, s[k]])
 
 def get_town_population():
-    with open('./raw_data/town_population_raw.csv', encoding='big5') as rcsv:
+    with open('../../input/town_population_raw.csv', encoding='big5') as rcsv:
         data = csv.reader(rcsv)
         next(data)
         next(data)
@@ -78,7 +78,7 @@ def get_town_population():
                 writer.writerow([row[1], row[3], row[4], row[7], row[8], row[11]])
 
 def get_city_to_city_commute():
-    with open('./raw_data/city_to_city_commute_raw.csv', encoding='utf-8') as rcsv:
+    with open('../../input/city_to_city_commute_raw.csv', encoding='utf-8') as rcsv:
         data = csv.reader(rcsv)
 
         with open(dump_dir + 'city_to_city_commute.csv', 'w') as csvf:
@@ -93,10 +93,11 @@ def get_city_to_city_commute():
                 writer.writerow(row)
 
 def get_contact_prob():
-    copyfile('./raw_data/contact_prob.csv', dump_dir + 'contact_prob.csv')
+    copyfile('../../input/contact_prob.csv', dump_dir + 'contact_prob.csv')
 
 def get_configurations():
-    copyfile('./raw_data/covid.conf','../../data/sim_data/conf/covid.conf')
+    for file in os.listdir("../../input/covid_conf/"):
+        copyfile("../../input/covid_conf/" + file, '../../data/sim_data/conf/' + file)
 
 
 if __name__ == '__main__':
