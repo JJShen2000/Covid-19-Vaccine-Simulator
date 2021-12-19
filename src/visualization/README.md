@@ -7,6 +7,7 @@
   
 ## Usage
 ### Update data
+`cd Visualization_Covid-19-Vaccine-Simulator`
 Assume data dir is in models/sim_data
 `python ./init_data.py`
 ### Run
