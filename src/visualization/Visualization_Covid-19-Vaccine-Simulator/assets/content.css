@@ -13,7 +13,7 @@
     position:absolute;
     top: 200;
     left: 20%; 
-    margin-top: 250px
+    margin-top: 350px
     }
 
     .content_right{
@@ -22,7 +22,7 @@
         position:absolute;
         top: 200;
         left: 60%; 
-        margin-top: 250px
+        margin-top: 350px
     }
    
    .top_metrics {
@@ -63,5 +63,5 @@
     position:absolute;
     top: 200;
     left: 20%; 
-    margin-top: 1000px
+    margin-top: 1100px
 }

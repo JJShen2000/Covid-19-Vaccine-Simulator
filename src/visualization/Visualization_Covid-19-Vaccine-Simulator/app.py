@@ -4,33 +4,20 @@ from dash import html
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
 import plotly.express as px
-import pandas as pd
-import os
+import plotly.graph_objects as go
 
 import views.line_chart
 import models.data_line_chart
 import views.choropleth
 import models.data_choropleth
+import views.line_chart_state_page
+import models.data_line_chart_state
 
 
 # Init. of app
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 app.title = 'Covid-19'
 server = app.server
-
-# SIDEBAR_STYLE = {
-#     "position": "fixed",
-#     "top": 62.5,
-#     "left": 0,
-#     "bottom": 0,
-#     "width": "16rem",
-#     "height": "100px",
-#     "z-index": 1,
-#     "overflow-x": "hidden",
-#     "transition": "all 0.5s",
-#     "padding": "0.5rem 1rem",
-#     "background-color": "#f8f9fa",
-# }
 
 app.layout = html.Div(
     children=[
@@ -46,85 +33,131 @@ app.layout = html.Div(
                     [
                         dbc.NavItem(dbc.NavLink('Front Page', href='/', active="exact")),
                         dbc.NavItem(dbc.NavLink('Choropleth', href='/choropleth', active="exact")),
-                        dbc.NavItem(dbc.NavLink('Line Chart', href='/line_chart', active="exact"))
+                        dbc.NavItem(dbc.NavLink('Line Chart - By Scenarioes', href='/line_chart', active="exact")),
+                        dbc.NavItem(dbc.NavLink('Line Chart - By States', href='/line_chart_state', active="exact"))
                     ],
                     pills=True,
                     vertical=True
                     # fill=True,
                 )
             ],
-            # style=SIDEBAR_STYLE
         ),
         html.Div(id='page-content')
     ]
 )
 
-@app.callback(
-    Output("choropleth1", "figure"), 
-    [Input("candidate", "value")],
-    [Input("scenario_dropdown1", "value")],Input('my-slider', 'value'))
-def display_choropleth1(candidate, scenario_dropdown, slider_val):
-    # data_frame = df if scenario_dropdown==1 else df_another
+def generate_choropleth(data_type, data_class, scenario_dropdown, slider_val):
     data_frame = models.data_choropleth.dict_df_by_period[scenario_dropdown][slider_val-1]
+    column = data_class
 
+    if 'ratio' in data_class:
+        hover_data = [data_class, data_class[:-8]]
+    elif 'in that' in data_class:
+        hover_data = [data_class]
+    else:
+        hover_data = [data_class, data_class+' (ratio)']
+        
     fig = px.choropleth_mapbox(data_frame=data_frame , 
         geojson='https://raw.githubusercontent.com/JJShen2000/Covid-19-Vaccine-Simulator/main/src/visualization/twTown.geo.json', 
         locations='Town', 
         featureidkey='properties.name',  
-        color=candidate,
+        color='log1p('+column+')',
         opacity=0.7,
         color_continuous_scale=px.colors.sequential.Reds,
-        range_color=(models.data_choropleth.range_color_classes[candidate]),
+        range_color=(models.data_choropleth.range_color_classes[column]),
         animation_frame='Period',
         height=600,
         width=700,
         mapbox_style="open-street-map",
         center={"lat": 24, "lon": 120},
-        zoom=6
+        zoom=6,
+        hover_data=hover_data
         )
     fig.update_geos(showcountries=False, showcoastlines=False, showland=False, fitbounds="locations")
     fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
-    if candidate[0] == 'n':
-        fig.update_coloraxes()
 
     return fig
+
+@app.callback(
+    Output("choropleth1", "figure"), 
+    [Input("choropleth-datatype", "value")],
+    [Input("choropleth-dataclass", "value")],
+    [Input("scenario_dropdown1", "value")],
+    Input('my-slider', 'value'),
+    [dash.dependencies.Input('age_group', 'value')])
+def display_choropleth1(data_type, data_class, scenario_dropdown, slider_val, age):
+    return generate_choropleth(data_type, data_class, scenario_dropdown, slider_val)
 
 
 @app.callback(
     Output("choropleth2", "figure"), 
-    [Input("candidate", "value")],
-    [Input("scenario_dropdown2", "value")],Input('my-slider', 'value'))
-def display_choropleth2(candidate, scenario_dropdown, slider_val):
-    # data_frame = models.data_choropleth.Data_choropleth.df if scenario_dropdown==1 else models.data_choropleth.Data_choropleth.df_another
-    # data_frame = data_frame[data_frame['Period']==slider_val ]
-    data_frame = models.data_choropleth.dict_df_by_period[scenario_dropdown][slider_val-1]
-    fig = px.choropleth_mapbox(data_frame=data_frame , 
-        geojson='https://raw.githubusercontent.com/JJShen2000/Covid-19-Vaccine-Simulator/main/src/visualization/twTown.geo.json', 
-        locations='Town', 
-        featureidkey='properties.name',  
-        color=candidate,
-        opacity=0.7,
-        color_continuous_scale=px.colors.sequential.Reds,
-        range_color=(models.data_choropleth.range_color_classes[candidate]),
-        # animation_frame='Period',
-        height=600,
-        width=700,
-        mapbox_style="open-street-map",
-        center={"lat": 24, "lon": 120},
-        zoom=6
-        )
-    fig.update_geos(showcountries=False, showcoastlines=False, showland=False, fitbounds="locations")
-    fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
+    [Input("choropleth-datatype", "value")],
+    [Input("choropleth-dataclass", "value")],
+    [Input("scenario_dropdown2", "value")],
+    Input('my-slider', 'value'),
+    [dash.dependencies.Input('age_group', 'value')])
+def display_choropleth2(data_type, data_class, scenario_dropdown, slider_val, age):
+    return generate_choropleth(data_type, data_class, scenario_dropdown, slider_val)
 
-    return fig
+    # # data_frame = models.data_choropleth.Data_choropleth.df if scenario_dropdown==1 else models.data_choropleth.Data_choropleth.df_another
+    # # data_frame = data_frame[data_frame['Period']==slider_val ]
+    # column = data_type+'_'+ data_class
+    # data_frame = models.data_choropleth.dict_df_by_period[scenario_dropdown][slider_val-1]
+    # fig = px.choropleth_mapbox(data_frame=data_frame , 
+    #     geojson='https://raw.githubusercontent.com/JJShen2000/Covid-19-Vaccine-Simulator/main/src/visualization/twTown.geo.json', 
+    #     locations='Town', 
+    #     featureidkey='properties.name',  
+    #     color=column,
+    #     opacity=0.7,
+    #     color_continuous_scale=px.colors.sequential.Reds,
+    #     range_color=(models.data_choropleth.range_color_classes[column]),
+    #     # animation_frame='Period',
+    #     height=600,
+    #     width=700,
+    #     mapbox_style="open-street-map",
+    #     center={"lat": 24, "lon": 120},
+    #     zoom=6
+    #     )
+    # fig.update_geos(showcountries=False, showcoastlines=False, showland=False, fitbounds="locations")
+    # fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
+
+    # return fig
+
+
+# Update the classes selection dropdown of choropleth
+@app.callback(
+    dash.dependencies.Output('choropleth-dataclass', 'options'),
+    [dash.dependencies.Input('choropleth-datatype', 'value')]
+)
+def update_choro_class_dropdown(type):
+    if type == 'num':
+        return [{'label': i, 'value': i} for i in models.data_choropleth.classes_num]
+    elif type == 'ratio':
+        return [{'label': i, 'value': i} for i in models.data_choropleth.classes_ratio]
+
+@app.callback(
+    dash.dependencies.Output('choropleth-dataclass', 'value'),
+    [dash.dependencies.Input('choropleth-datatype', 'value')]
+)
+def update_dropdown(type):
+    if type == 'num':
+        return models.data_choropleth.classes_num[0]
+    elif type == 'ratio':
+        return models.data_choropleth.classes_ratio[0]
 
 
 @app.callback(
     Output("line-chart", "figure"), 
-    [Input("line-chart-data-class", "value")],[Input('line-chart-country', 'value')], [Input('line-chart-town', 'value')])
-def update_line_chart(data_class, country, town):
-    mask = ((models.data_line_chart.Data_line_chart.df['Town']==town) & (models.data_line_chart.Data_line_chart.df['Country']==country))
-    fig = px.line(models.data_line_chart.Data_line_chart.df[mask], 
+    [Input("line-chart-datatype", "value")], 
+    [Input("line-chart-dataclass", "value")],
+    [Input('line-chart-country', 'value')],
+    [Input('line-chart-town', 'value')],
+    [dash.dependencies.Input('age_group_lc1', 'value')]
+)
+def update_line_chart(data_type, data_class, country, town, age_group):
+    models.data_line_chart.update_age(age_group)
+    mask = ((models.data_line_chart.df['Town']==town) & (models.data_line_chart.df['Country']==country))
+    fig = px.line(models.data_line_chart.df[mask], 
         x="Period", y=data_class, color='scenario',height=500)
     fig.update_layout(
         legend_title="Scenario",
@@ -132,6 +165,56 @@ def update_line_chart(data_class, country, town):
             size=18
         )
     )
+    fig.update_traces(mode="markers+lines")
+
+    fig.update_xaxes(showspikes=True, spikecolor="green", spikesnap="cursor", spikemode="across")
+    fig.update_yaxes(showspikes=True, spikecolor="orange", spikethickness=2)
+    fig.update_layout(spikedistance=1000, hoverdistance=100)
+    return fig
+
+
+@app.callback(
+    Output("line-chart2", "figure"), 
+    [Input("line-chart2-datatype", "value")], 
+    [Input('line-chart2-country', 'value')],
+    [Input('line-chart2-town', 'value')],
+    [Input("lc-state-scenario_dp", "value")],
+    [dash.dependencies.Input('age_group_lc12', 'value')]
+)
+def update_line_chart(data_type, country, town, scenario, age_group):
+    models.data_line_chart_state.update_age(age_group, scenario)
+    mask = ((models.data_line_chart_state.df['Town']==town) & (models.data_line_chart_state.df['Country']==country))
+    
+    local_df = models.data_line_chart_state.df[mask]
+    # fig = px.line(models.data_line_chart_state.df[mask], 
+    #     x="Period", y=data_class, color='scenario',height=500)
+    fig = go.Figure()
+
+    if data_type == 'ratio':
+        state_list = models.data_line_chart_state.classes_ratio 
+    else:
+        state_list = models.data_line_chart_state.classes_num
+
+    for col in state_list:
+        fig.add_trace(go.Scatter(x=local_df["Period"], y=local_df[col],
+                            name=col
+                            ))
+    # fig.add_trace(go.Scatter(x=local_df["Period"], y=local_df['Deaths (ratio)'], name = 'Deaths (ratio)',
+    #                      line=dict(color='royalblue', width=4)))
+    # fig.add_trace(go.Scatter(x=local_df["Period"], y=local_df[' (ratio)'], name = 'Deaths (ratio)',
+    #                      line=dict(color='royalblue', width=4)))
+
+    fig.update_layout(
+        legend_title="State",
+        font=dict(
+            size=18
+        )
+    )
+    fig.update_traces(mode="markers+lines")
+
+    fig.update_xaxes(showspikes=True, spikecolor="green", spikesnap="cursor", spikemode="across")
+    fig.update_yaxes(showspikes=True, spikecolor="orange", spikethickness=2)
+    fig.update_layout(spikedistance=1000, hoverdistance=100)
     return fig
 
 
@@ -144,6 +227,67 @@ def on_click(n_intervals):
         return 0
     else:
         return (n_intervals+1)%models.data_choropleth.period_num
+
+
+@app.callback(
+    [dash.dependencies.Output('age_group', 'value')],
+    [dash.dependencies.Input('age_group', 'value')],
+)
+def update_age_group_choro(age_id):
+    models.data_choropleth.update_df(age_id)
+    return dash.no_update 
+
+# @app.callback(
+#     [dash.dependencies.Output('age_group_lc1', 'value')],
+#     [dash.dependencies.Input('age_group_lc1', 'value')],
+# )
+# def update_age_group_lc1(age_id):
+#     models.data_line_chart.update_age(age_id)
+#     return dash.no_update 
+
+
+# Update the classes selection dropdown of choropleth
+@app.callback(
+    dash.dependencies.Output('line-chart-dataclass', 'options'),
+    [dash.dependencies.Input('line-chart-datatype', 'value')]
+)
+def update_choro_class_dropdown(type):
+    if type == 'num':
+        return [{'label': i, 'value': i} for i in models.data_line_chart.classes_num]
+    elif type == 'ratio':
+        return [{'label': i, 'value': i} for i in models.data_line_chart.classes_ratio]
+
+@app.callback(
+    dash.dependencies.Output('line-chart-dataclass', 'value'),
+    [dash.dependencies.Input('line-chart-datatype', 'value')]
+)
+def update_dropdown(type):
+    if type == 'num':
+        return models.data_line_chart.classes_num[0]
+    elif type == 'ratio':
+        return models.data_line_chart.classes_ratio[0]
+
+
+# Update the classes selection dropdown of lc2
+@app.callback(
+    dash.dependencies.Output('line-chart2-dataclass', 'options'),
+    [dash.dependencies.Input('line-chart2-datatype', 'value')]
+)
+def update_choro_class_dropdown(type):
+    if type == 'num':
+        return [{'label': i, 'value': i} for i in models.data_line_chart_state.classes_num]
+    elif type == 'ratio':
+        return [{'label': i, 'value': i} for i in models.data_line_chart_state.classes_ratio]
+
+@app.callback(
+    dash.dependencies.Output('line-chart2-dataclass', 'value'),
+    [dash.dependencies.Input('line-chart2-datatype', 'value')]
+)
+def update_dropdown(type):
+    if type == 'num':
+        return models.data_line_chart_state.classes_num[0]
+    elif type == 'ratio':
+        return models.data_line_chart_state.classes_ratio[0]
 
 
 @app.callback(
@@ -178,6 +322,22 @@ def update_dropdown(name):
     return models.data_line_chart.tract_option_dict[name][0]
 
 
+# Update dropdown of line chart2
+@app.callback(
+    dash.dependencies.Output('line-chart2-town', 'options'),
+    [dash.dependencies.Input('line-chart2-country', 'value')]
+)
+def update_dropdown(name):
+    return [{'label': i, 'value': i} for i in models.data_line_chart.tract_option_dict[name]]
+
+@app.callback(
+    dash.dependencies.Output('line-chart2-town', 'value'),
+    [dash.dependencies.Input('line-chart2-country', 'value')]
+)
+def update_dropdown(name):
+    return models.data_line_chart.tract_option_dict[name][0]
+
+
 @app.callback(
     Output('page-content', 'children'),
     Input('url', 'pathname')
@@ -189,6 +349,8 @@ def render_page_content(pathname):
         return views.choropleth.choropleth_page
     elif pathname == '/line_chart':
         return views.line_chart.line_chart_page
+    elif pathname == '/line_chart_state':
+        return views.line_chart_state_page.line_chart_state_page
 
     return html.Div(className="content", children=html.H1('404！'))
 
