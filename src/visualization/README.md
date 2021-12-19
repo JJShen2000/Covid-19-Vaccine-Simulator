@@ -6,8 +6,8 @@
   `pip install plotly`
   
 ## Usage
-### Update data
 `cd Visualization_Covid-19-Vaccine-Simulator`
+### Update data
 Assume data dir is in models/sim_data
 `python ./init_data.py`
 ### Run
