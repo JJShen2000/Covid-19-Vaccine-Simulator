@@ -1,94 +1,83 @@
 import random
+import numpy as np
+import pandas as pd
 
 dump_dir = "../../data/sim_data/vaccine/"
 dir_path = "../../data/sim_data/group_tract_age/"
-all_age3 = list()
-all_age2 = list()
-all_age1 = list()
-all_age0 = list()
+
+print("Loading demographic data")
+num_vaccine = 0     # should include all people later
+people_each_tract_age = np.empty((368, 4), dtype=object)
 for i in range(368):
-    file_path = dir_path + str(i) + "-3.txt"
-    with open(file_path, 'r') as f:
-        n = int(f.readline().strip())
-        p = f.readline().strip().split()
-    all_age3 += p
+    for j in range(4):
+        file_path = dir_path + str(i) + "-" + str(j) + ".txt"
+        with open(file_path, 'r') as f:
+            n = int(f.readline().strip())
+            p = f.readline().strip().split()
+        num_vaccine += n
+        people_each_tract_age[i, j] = p
+people_each_age = np.sum(people_each_tract_age, axis=0)
+people_each_tract = np.sum(people_each_tract_age, axis=1)
 
-    file_path = dir_path + str(i) + "-2.txt"
-    with open(file_path, 'r') as f:
-        n = int(f.readline().strip())
-        p = f.readline().strip().split()
-    all_age2 += p
+# Prioritize different age groups
+for i in range(4):
+    print("Output strategy: age group {} first".format(i))
+    prioritized = list()
+    all_others = list()
+    for j in range(4):
+        if j == i:
+            prioritized += people_each_age[j]
+        else:
+            all_others += people_each_age[j]
+    random.shuffle(prioritized)
+    random.shuffle(all_others)
+    output_filepath = dump_dir + "vaccination_doc_age" + str(i) + "_first.txt"
+    with open(output_filepath, 'w') as f:
+        line = str(num_vaccine) + ' \n'
+        for p in prioritized:
+            line += (p + ' ')
+        for p in all_others:
+            line += (p + ' ')
+        line += '\n'
+        f.write(line)
 
-    file_path = dir_path + str(i) + "-1.txt"
-    with open(file_path, 'r') as f:
-        n = int(f.readline().strip())
-        p = f.readline().strip().split()
-    all_age1 += p
-
-    file_path = dir_path + str(i) + "-0.txt"
-    with open(file_path, 'r') as f:
-        n = int(f.readline().strip())
-        p = f.readline().strip().split()
-    all_age0 += p
-
-print("Output strategy: age 65+ first")
-vaccine_order = list()
-random.shuffle(all_age3)
-vaccine_order += all_age3
-all_others = all_age2 + all_age1 + all_age0
+# Prioritize specific census tracts
+print("Output strategy: specified census tracts first")
+df_tracts = pd.read_csv('../../data/init_data/census_tracts.csv', header=None)
+tract_dict = dict()
+for i in range(len(df_tracts)):
+    tract_name = df_tracts.iloc[i, 0]
+    if tract_name not in tract_dict:
+        tract_dict[tract_name] = list()
+    tract_dict[tract_name].append(i)
+df_prioritized_tracts = pd.read_csv('../../input/tunables/vacc_prioritized_tracts.csv', header=None)
+prioritized = list()
+unprioritized_tracts_mask = np.array([True] * 368)
+for _, df_row in df_prioritized_tracts.iterrows():
+    prioritized_tracts_per_county = tract_dict[df_row[0]]
+    unprioritized_tracts_mask[prioritized_tracts_per_county] = False
+    prioritized_per_county = list()
+    for tract in prioritized_tracts_per_county:
+        prioritized_per_county += people_each_tract[tract]
+    random.shuffle(prioritized_per_county)
+    prioritized += prioritized_per_county
+all_others = list()
+unprioritized_tracts = np.array(list(range(368)))[unprioritized_tracts_mask]
+for tract in unprioritized_tracts:
+    all_others += people_each_tract[tract]
 random.shuffle(all_others)
-vaccine_order += all_others
-with open(dump_dir + "vaccination_doc_age3_first.txt", 'w') as f:
-    line = str(len(vaccine_order)) + ' \n'
-    for p in vaccine_order:
+with open(dump_dir + "vaccination_doc_tract_based.txt", 'w') as f:
+    line = str(num_vaccine) + ' \n'
+    for p in prioritized:
+        line += (p + ' ')
+    for p in all_others:
         line += (p + ' ')
     line += '\n'
     f.write(line)
 
-print("Output strategy: age 19-64 first")
-vaccine_order = list()
-random.shuffle(all_age2)
-vaccine_order += all_age2
-all_others = all_age3 + all_age1 + all_age0
-random.shuffle(all_others)
-vaccine_order += all_others
-with open(dump_dir + "vaccination_doc_age2_first.txt", 'w') as f:
-    line = str(len(vaccine_order)) + ' \n'
-    for p in vaccine_order:
-        line += (p + ' ')
-    line += '\n'
-    f.write(line)
-
-print("Output strategy: age 5-18 first")
-vaccine_order = list()
-random.shuffle(all_age1)
-vaccine_order += all_age1
-all_others = all_age3 + all_age2 + all_age0
-random.shuffle(all_others)
-vaccine_order += all_others
-with open(dump_dir + "vaccination_doc_age1_first.txt", 'w') as f:
-    line = str(len(vaccine_order)) + ' \n'
-    for p in vaccine_order:
-        line += (p + ' ')
-    line += '\n'
-    f.write(line)
-
-print("Output strategy: age 0-4 first")
-vaccine_order = list()
-random.shuffle(all_age0)
-vaccine_order += all_age0
-all_others = all_age3 + all_age2 + all_age1
-random.shuffle(all_others)
-vaccine_order += all_others
-with open(dump_dir + "vaccination_doc_age0_first.txt", 'w') as f:
-    line = str(len(vaccine_order)) + ' \n'
-    for p in vaccine_order:
-        line += (p + ' ')
-    line += '\n'
-    f.write(line)
-
+# Random vaccination
 print("Output strategy: no constraint")
-vaccine_order = all_age3 + all_age2 + all_age1 + all_age0
+vaccine_order = np.sum(people_each_age)
 random.shuffle(vaccine_order)
 with open(dump_dir + "vaccination_doc_no_constraint.txt", 'w') as f:
     line = str(len(vaccine_order)) + ' \n'
