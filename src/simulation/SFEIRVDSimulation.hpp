@@ -11,9 +11,16 @@
 
 class SFEIRVDSimulation : public SFEIRVDModel {
 public:
-    void setOutFile(const std::string& fname) {
-        fout.open(fname);
-        if (!fout) {
+    void setStateOutFile(const std::string& fname) {
+        fstate.open(fname);
+        if (!fstate) {
+            std::cout << "fail open file\n";
+        }
+    }
+
+    void setAnalOutFile(const std::string& fname) {
+        fanal.open(fname);
+        if (!fanal) {
             std::cout << "fail open file\n";
         }
     }
@@ -28,9 +35,18 @@ protected:
         rcnt.resize(N_lc, std::vector<uint>(N_ag));
         vcnt.resize(N_lc, std::vector<uint>(N_ag));
         dcnt.resize(N_lc, std::vector<uint>(N_ag));
+
+        accum_icnt.resize(N_lc, std::vector<uint>(N_ag));
+        accum_vcnt.resize(N_lc, std::vector<uint>(N_ag));
+        have_infected.resize(N_nd);
+
         for (auto& v : ndp) {
             ++allcnt[v.loc][v.age];
-            if (v.stateID == 'I') ++icnt[v.loc][v.age];
+            if (v.stateID == 'I') {
+                ++icnt[v.loc][v.age];
+                ++accum_icnt[v.loc][v.age];
+                have_infected[v.id] = 1;
+            }
             else ++scnt[v.loc][v.age];
         }
 
@@ -47,7 +63,40 @@ protected:
         #endif
 
         writeHeader();
-        writeUnit(0);
+
+        for (uint i = 0; i < N_lc; ++i) {
+            for (uint j = 0; j < N_ag; ++j) {
+                double sratio = scnt[i][j] / (double)allcnt[i][j];
+                double fratio = fcnt[i][j] / (double)allcnt[i][j];
+                double eratio = ecnt[i][j] / (double)allcnt[i][j];
+                double iratio = icnt[i][j] / (double)allcnt[i][j];
+                double rratio = rcnt[i][j] / (double)allcnt[i][j];
+                double vratio = vcnt[i][j] / (double)allcnt[i][j];
+                double dratio = dcnt[i][j] / (double)allcnt[i][j];
+                fstate << 0 << ',' << i << ',' << j << ',';
+                fstate << scnt[i][j] << ',' << fcnt[i][j] << ',' << ecnt[i][j] << ',' << icnt[i][j] << ',' << rcnt[i][j] << ',' << vcnt[i][j] << ',' << dcnt[i][j] << ',';
+                fstate << sratio  << ',' << fratio  << ',' << eratio  << ',' << iratio  << ',' << rratio  << ',' << vratio << ','  << dratio  << '\n';
+            
+            }
+        }
+
+        for (uint i = 0; i < N_lc; ++i) {
+            for (uint j = 0; j < N_ag; ++j) {
+                fanal << 0 << ',' << i << ',' << j << ',';
+                fanal << 0 << ',' << 0 << ',';
+                fanal << dcnt[i][j] << ',' << accum_icnt[i][j] << ',' << accum_vcnt[i][j] << ',';
+
+                double dratio = dcnt[i][j] / (double)allcnt[i][j];
+                double accum_iratio = accum_icnt[i][j] / (double)allcnt[i][j];
+                double vratio = accum_vcnt[i][j] / (double)allcnt[i][j];
+                fanal << dratio << ',' << accum_iratio << ',' << vratio << '\n';
+            
+            }
+        }
+
+        #ifdef SHOW
+        std::cout << 0 << "\t\t" << scnts << "\t\t" << fcnts << "\t\t" << ecnts << "\t\t" << icnts << "\t\t" << rcnts << "\t\t" << vcnts << "\t\t" << dcnts << "\n";
+        #endif
 
         #ifdef DETAIL
         for (auto& v : ndp) {
@@ -70,40 +119,71 @@ protected:
         
     }
 
-    virtual void statisticUnit(const Time::TimeStep& ts, const Nodes& s2f, const Nodes& s2v, const Nodes& s2e, const Nodes& f2e, const Nodes& e2i, const Nodes& i2f, const Nodes& i2r, const Nodes& i2d) override {
+    virtual void statisticUnit(const Time::TimeStep& ts, const std::vector<uint>& s2f, const std::vector<uint>& s2v, const std::vector<uint>& s2e, const std::vector<uint>& f2e, const std::vector<uint>& e2i, const std::vector<uint>& i2f, const std::vector<uint>& i2r, const std::vector<uint>& i2d) override {
         //std::cout << "statistic unit\n";
         for (const auto& v : s2f) {
-            --scnt[v.getLocation()][v.getAge()];
-            ++fcnt[v.getLocation()][v.getAge()];
+            --scnt[ndp[v].loc][ndp[v].age];
+            ++fcnt[ndp[v].loc][ndp[v].age];
         }
         for (const auto& v : s2v) {
-            --scnt[v.getLocation()][v.getAge()];
-            ++vcnt[v.getLocation()][v.getAge()];
+            --scnt[ndp[v].loc][ndp[v].age];
+            ++vcnt[ndp[v].loc][ndp[v].age];
         }
         for (const auto& v : s2e) {
-            --scnt[v.getLocation()][v.getAge()];
-            ++ecnt[v.getLocation()][v.getAge()];
+            --scnt[ndp[v].loc][ndp[v].age];
+            ++ecnt[ndp[v].loc][ndp[v].age];
         }
         for (const auto& v : f2e) {
-            --fcnt[v.getLocation()][v.getAge()];
-            ++ecnt[v.getLocation()][v.getAge()];
+            --fcnt[ndp[v].loc][ndp[v].age];
+            ++ecnt[ndp[v].loc][ndp[v].age];
         }
         for (const auto& v : e2i) {
-            --ecnt[v.getLocation()][v.getAge()];
-            ++icnt[v.getLocation()][v.getAge()];
+            --ecnt[ndp[v].loc][ndp[v].age];
+            ++icnt[ndp[v].loc][ndp[v].age];
         }
         for (const auto& v : i2f) {
-            --icnt[v.getLocation()][v.getAge()];
-            ++fcnt[v.getLocation()][v.getAge()];
+            --icnt[ndp[v].loc][ndp[v].age];
+            ++fcnt[ndp[v].loc][ndp[v].age];
         }
         for (const auto& v : i2r) {
-            --icnt[v.getLocation()][v.getAge()];
-            ++rcnt[v.getLocation()][v.getAge()];
+            --icnt[ndp[v].loc][ndp[v].age];
+            ++rcnt[ndp[v].loc][ndp[v].age];
         }
         for (const auto& v : i2d) {
-            --icnt[v.getLocation()][v.getAge()];
-            ++dcnt[v.getLocation()][v.getAge()];
+            --icnt[ndp[v].loc][ndp[v].age];
+            ++dcnt[ndp[v].loc][ndp[v].age];
         }
+
+        for (const auto& v : s2v) {
+            ++accum_vcnt[ndp[v].loc][ndp[v].age];
+        }
+        for (const auto& v : s2f) {
+            ++accum_vcnt[ndp[v].loc][ndp[v].age];
+        }
+        for (const auto& v : s2e) {
+            if (!have_infected[v]) {
+                ++accum_icnt[ndp[v].loc][ndp[v].age];
+                have_infected[v] = 1;
+            }
+        }
+        for (const auto& v : f2e) {
+            if (!have_infected[v]) {
+                ++accum_icnt[ndp[v].loc][ndp[v].age];
+                have_infected[v] = 1;
+            }
+        }
+
+        // for (auto v : s2e) if (ndp[v].stateID != 'E') std::cout << "GG\n";
+        // for (auto v : f2e) if (ndp[v].stateID != 'E') std::cout << "GG\n";
+        // for (auto v : s2f) if (ndp[v].stateID != 'F') std::cout << "GG\n";
+        // for (auto v : s2v) if (ndp[v].stateID != 'V') std::cout << "GG\n";
+        // for (auto v : e2i) if (ndp[v].stateID != 'I') std::cout << "GG\n";
+        // for (auto v : i2f) if (ndp[v].stateID != 'F') std::cout << "GG\n";
+        // for (auto v : i2r) if (ndp[v].stateID != 'R') std::cout << "GG\n";
+        // for (auto v : i2d) if (ndp[v].stateID != 'D') std::cout << "GG\n";
+
+        // for (int i = 0; i < I.size(); ++i) if (ndp[I[i]].stateID != 'I') std::cout << "GG\n";
+        // for (int i = 0; i < E.size(); ++i) if (ndp[E[i]].stateID != 'E') std::cout << "GG\n";
 
         #ifdef CHANGES
         if (s2f.size()) {
@@ -174,7 +254,53 @@ protected:
         dcnts += i2d.size();
         #endif
 
-        writeUnit(ts.getDay() * ts.getPeriodLength() + ts.getPeriod() + 1);
+        uint p = ts.getDay() * ts.getPeriodLength() + ts.getPeriod() + 1;
+        for (uint i = 0; i < N_lc; ++i) {
+            for (uint j = 0; j < N_ag; ++j) {
+                double sratio = scnt[i][j] / (double)allcnt[i][j];
+                double fratio = fcnt[i][j] / (double)allcnt[i][j];
+                double eratio = ecnt[i][j] / (double)allcnt[i][j];
+                double iratio = icnt[i][j] / (double)allcnt[i][j];
+                double rratio = rcnt[i][j] / (double)allcnt[i][j];
+                double vratio = vcnt[i][j] / (double)allcnt[i][j];
+                double dratio = dcnt[i][j] / (double)allcnt[i][j];
+                fstate << p << ',' << i << ',' << j << ',';
+                fstate << scnt[i][j] << ',' << fcnt[i][j] << ',' << ecnt[i][j] << ',' << icnt[i][j] << ',' << rcnt[i][j] << ',' << vcnt[i][j] << ',' << dcnt[i][j] << ',';
+                fstate << sratio  << ',' << fratio  << ',' << eratio  << ',' << iratio  << ',' << rratio  << ',' << vratio << ','  << dratio  << '\n';
+            
+            }
+        }
+
+        std::vector<std::vector<uint>> cur_death(N_lc, std::vector<uint>(N_ag));
+        std::vector<std::vector<uint>> cur_infec(N_lc, std::vector<uint>(N_ag));
+
+        for (auto& v : i2d) {
+            ++cur_death[ndp[v].loc][ndp[v].age];
+        }
+        for (auto& v : s2e) {
+            ++cur_infec[ndp[v].loc][ndp[v].age];
+        }
+        for (auto& v : f2e) {
+            ++cur_infec[ndp[v].loc][ndp[v].age];
+        } 
+
+        for (uint i = 0; i < N_lc; ++i) {
+            for (uint j = 0; j < N_ag; ++j) {
+                fanal << p << ',' << i << ',' << j << ',';
+                fanal << cur_death[i][j] << ',' << cur_infec[i][j] << ',';
+                fanal << dcnt[i][j] << ',' << accum_icnt[i][j] << ',' << accum_vcnt[i][j] << ',';
+
+                double dratio = dcnt[i][j] / (double)allcnt[i][j];
+                double accum_iratio = accum_icnt[i][j] / (double)allcnt[i][j];
+                double vratio = accum_vcnt[i][j] / (double)allcnt[i][j];
+                fanal << dratio << ',' << accum_iratio << ',' << vratio << '\n';
+            
+            }
+        }
+
+        #ifdef SHOW
+        std::cout << p << "\t\t" << scnts << "\t\t" << fcnts << "\t\t" << ecnts << "\t\t" << icnts << "\t\t" << rcnts << "\t\t" << vcnts << "\t\t" << dcnts << "\n";
+        #endif
 
         #ifdef DETAIL
         for (auto v : s2f) {
@@ -222,57 +348,73 @@ protected:
 
     virtual void statisticEnd() override {
         //std::cout << "statistic end\n";
-        fout.close();
+        fstate.close();
+        fanal.close();
     }
 
     inline void writeHeader() {
         //fout << "\"Period\",\"Town\",\"num_infection\",\"num_dead\",\"ratio_infection\",\"ratio_dead\"\n";
-        fout << "\"Period\"" << ',';
-        fout << "\"Town\"" << ',';
-        fout << "\"Age\"" << ',';
+        fstate << "\"Period\"" << ',';
+        fstate << "\"Town\"" << ',';
+        fstate << "\"Age\"" << ',';
 
-        fout << "\"num_susceptible\"" << ',';
-        fout << "\"num_failed\"" << ',';
-        fout << "\"num_exposed\"" << ',';
-        fout << "\"num_infected\"" << ',';
-        fout << "\"num_recovered\"" << ',';
-        fout << "\"num_vaccined\"" << ',';
-        fout << "\"num_dead\"" << ',';
+        fstate << "\"num_susceptible\"" << ',';
+        fstate << "\"num_failed\"" << ',';
+        fstate << "\"num_exposed\"" << ',';
+        fstate << "\"num_infected\"" << ',';
+        fstate << "\"num_recovered\"" << ',';
+        fstate << "\"num_vaccined\"" << ',';
+        fstate << "\"num_dead\"" << ',';
         
-        fout << "\"ratio_susceptible\"" << ',';
-        fout << "\"ratio_failed\"" << ',';
-        fout << "\"ratio_exposed\"" << ',';
-        fout << "\"ratio_infected\"" << ',';
-        fout << "\"ratio_recovered\"" << ',';
-        fout << "\"ratio_vaccined\"" << ',';
-        fout << "\"ratio_dead\"" << '\n';
+        fstate << "\"ratio_susceptible\"" << ',';
+        fstate << "\"ratio_failed\"" << ',';
+        fstate << "\"ratio_exposed\"" << ',';
+        fstate << "\"ratio_infected\"" << ',';
+        fstate << "\"ratio_recovered\"" << ',';
+        fstate << "\"ratio_vaccined\"" << ',';
+        fstate << "\"ratio_dead\"" << '\n';
+
+        fanal << "\"Period\"" << ',';
+        fanal << "\"Town\"" << ',';
+        fanal << "\"Age\"" << ',';
+
+        fanal << "\"Deaths in that period\"" << ',';
+        fanal << "\"Infections in that period\"" << ',';
+
+        fanal << "\"Deaths\"" << ',';
+        fanal << "\"Infections\"" << ',';
+        fanal << "\"Vaccinated\"" << ',';
+
+        fanal << "\"Deaths (ratio)\"" << ',';
+        fanal << "\"Infections (ratio)\"" << ',';
+        fanal << "\"Vaccinated (ratio)\"" << '\n';
 
         #ifdef SHOW
         std::cout << "Period\t\tS\t\tF\t\tE\t\tI\t\tR\t\tV\t\tD\n";
         #endif
     }
 
-    void writeUnit(uint p) {
-        for (uint i = 0; i < N_lc; ++i) {
-            for (uint j = 0; j < N_ag; ++j) {
-                double sratio = scnt[i][j] / (double)allcnt[i][j];
-                double fratio = fcnt[i][j] / (double)allcnt[i][j];
-                double eratio = ecnt[i][j] / (double)allcnt[i][j];
-                double iratio = icnt[i][j] / (double)allcnt[i][j];
-                double rratio = rcnt[i][j] / (double)allcnt[i][j];
-                double vratio = vcnt[i][j] / (double)allcnt[i][j];
-                double dratio = dcnt[i][j] / (double)allcnt[i][j];
-                fout << p << ',' << i << ',' << j << ',';
-                fout << scnt[i][j] << ',' << fcnt[i][j] << ',' << ecnt[i][j] << ',' << icnt[i][j] << ',' << rcnt[i][j] << ',' << vcnt[i][j] << ',' << dcnt[i][j] << ',';
-                fout << sratio  << ',' << fratio  << ',' << eratio  << ',' << iratio  << ',' << rratio  << ',' << vratio << ','  << dratio  << '\n';
+    // void writeUnit(uint p) {
+    //     for (uint i = 0; i < N_lc; ++i) {
+    //         for (uint j = 0; j < N_ag; ++j) {
+    //             double sratio = scnt[i][j] / (double)allcnt[i][j];
+    //             double fratio = fcnt[i][j] / (double)allcnt[i][j];
+    //             double eratio = ecnt[i][j] / (double)allcnt[i][j];
+    //             double iratio = icnt[i][j] / (double)allcnt[i][j];
+    //             double rratio = rcnt[i][j] / (double)allcnt[i][j];
+    //             double vratio = vcnt[i][j] / (double)allcnt[i][j];
+    //             double dratio = dcnt[i][j] / (double)allcnt[i][j];
+    //             fstate << p << ',' << i << ',' << j << ',';
+    //             fstate << scnt[i][j] << ',' << fcnt[i][j] << ',' << ecnt[i][j] << ',' << icnt[i][j] << ',' << rcnt[i][j] << ',' << vcnt[i][j] << ',' << dcnt[i][j] << ',';
+    //             fstate << sratio  << ',' << fratio  << ',' << eratio  << ',' << iratio  << ',' << rratio  << ',' << vratio << ','  << dratio  << '\n';
             
-            }
-        }
+    //         }
+    //     }
 
-        #ifdef SHOW
-        std::cout << p << "\t\t" << scnts << "\t\t" << fcnts << "\t\t" << ecnts << "\t\t" << icnts << "\t\t" << rcnts << "\t\t" << vcnts << "\t\t" << dcnts << "\n";
-        #endif
-    }
+    //     #ifdef SHOW
+    //     std::cout << p << "\t\t" << scnts << "\t\t" << fcnts << "\t\t" << ecnts << "\t\t" << icnts << "\t\t" << rcnts << "\t\t" << vcnts << "\t\t" << dcnts << "\n";
+    //     #endif
+    // }
 
     #ifdef DETAIL
     void showNodes(char c, std::set<int>& st) {
@@ -292,8 +434,11 @@ protected:
     uint icnts, scnts, fcnts, rcnts, ecnts, vcnts, dcnts;
     #endif
 
-    std::ofstream fout;
+    std::ofstream fstate, fanal;
     std::vector<std::vector<uint>> allcnt, icnt, scnt, fcnt, rcnt, ecnt, vcnt, dcnt;
+    std::vector<std::vector<uint>> accum_icnt, accum_vcnt;
+
+    std::vector<bool> have_infected;
 };
 
 #endif

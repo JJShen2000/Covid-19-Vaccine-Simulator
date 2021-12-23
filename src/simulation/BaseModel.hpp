@@ -26,9 +26,7 @@ protected:
 
     void loadGraph(std::istream& in) {
         //std::cout << "load graph\n";
-
         in >> N_nd >> N_pr >> N_gp >> N_ag >> N_cm >> N_lc;
-
         tm.setPeriod(N_pr);
         cmp.resize(N_cm);
         cgpp.resize(N_gp);
@@ -39,6 +37,7 @@ protected:
             in >> j;
             cgpp[i].setContactMatrix(ContactMatrix(&cmp[j]));
             cgpp[i].id = i;
+            cgpp[i].nds.resize(N_ag);
         }
 
         for (uint i = 0; i < N_cm; ++i) {
@@ -64,6 +63,8 @@ protected:
                     uint gid;
                     in >> gid;
                     cur.gp[j].push_back(ContactGroup(&cgpp[gid]));
+                    cgpp[gid].nds[cur.age].push_back(i);
+                    cgpp[gid].period = j;
                     //cgpp[gid].nodes.push_back(Node(&cur));
                 }
             }
@@ -87,20 +88,6 @@ protected:
         }
         return mp;
     }
-
-//     std::vector<std::pair<Location, uint>> loadInit(std::istream& in) const {
-//         //std::cout << "load init\n";
-// #ifdef DEBUG
-//         LOG("--load init")
-// #endif
-//         std::vector<std::pair<Location, uint>> vec;
-//         Location loc;
-//         uint num;
-//         while (in >> loc >> num) {
-//             vec.push_back({loc, num});
-//         }
-//         return vec;
-//     }
 
     uint N_nd; // # of nodes
     uint N_pr; // # of periods per day

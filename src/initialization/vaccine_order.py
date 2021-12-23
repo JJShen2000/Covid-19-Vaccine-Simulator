@@ -86,3 +86,7 @@ with open(dump_dir + "vaccination_doc_no_constraint.txt", 'w') as f:
     line += '\n'
     f.write(line)
 
+# No vaccine
+with open(dump_dir + "no_vaccine.txt", 'w') as f:
+    f.write("0")
+

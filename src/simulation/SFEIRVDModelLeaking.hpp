@@ -22,9 +22,8 @@ public:
         auto mp = loadParam(in_param);
         initParam(mp);
 
-        S.init(N_gp, N_ag, cgpp);
-        F.init(N_gp, N_ag, cgpp);
-        V.init(N_gp, N_ag, cgpp);
+        icnt_all.resize(N_gp);
+        icnt.resize(N_gp, std::vector<uint>(N_ag));
 
         loadVaccineOrder(in_vacc);
 
@@ -67,7 +66,7 @@ protected:
         in_vacc >> n;
         for (uint i = 0; i < n; ++i) {
             in_vacc >> nid;
-            vacc_order.push_back(Node(&ndp[nid]));
+            vacc_order.push_back(nid);
         }
     }
 
@@ -83,6 +82,28 @@ protected:
         return re;
     }
 
+    void pushInfector(uint u) {
+        //std::cout << "push " << u << '\n';
+        I.insert(u);
+        ndp[u].stateID = 'I';
+        for (auto& cgps : ndp[u].gp) {
+            for (auto& cgp : cgps) {
+                ++icnt_all[cgp.getID()];
+                ++icnt[cgp.getID()][ndp[u].age];
+            } 
+        }
+    }
+
+    void popInfector(uint u) {
+        //std::cout << "pop " << u << '\n';
+        for (auto& cgps : ndp[u].gp) {
+            for (auto& cgp : cgps) {
+                --icnt_all[cgp.getID()];
+                --icnt[cgp.getID()][ndp[u].age];
+            } 
+        }
+    }
+
     void initInitInfector(std::vector<uint>& inits) {
         //std::cout << "init init infec\n";
         std::sort(inits.begin(), inits.end());
@@ -90,64 +111,54 @@ protected:
         for (uint i = 0; i < inits.size(); ++i) {
             while (j < inits[i]) {
                 ndp[j].stateID = 'S';
-                S.insert(Node(&ndp[j]));
+                // S.insert(Node(&ndp[j]));
                 ++j;
             }
-            ndp[j].stateID = 'I';
-            I.insert(Node(&ndp[j]));
+            pushInfector(j);
             ++j;
         }
         while (j < N_nd) {
             ndp[j].stateID = 'S';
-            S.insert(Node(&ndp[j]));
+            // S.insert(Node(&ndp[j]));
             ++j;
         }
     }   
 
-    inline Nodes infection(SuspictibleState& Sus, uint period, const std::vector<double>& ptrans) {
-        // Nodes sus2i;
-        // for (uint i = 0; i < I.size(); ++i) {
-        //     Nodes tmp = Sus.infected(I[i], period, ptrans);
-        //     sus2i.insert(sus2i.end(), tmp.begin(), tmp.end());
-        // }
-        // return sus2i;
+    inline std::vector<uint> infection(char src, char des, uint period, const std::vector<double>& ptrans) {
+        std::vector<uint> re;
+        for (uint i = 0; i < N_gp; ++i) {
+            if (!icnt_all[i] || cgpp[i].period != period) continue;
+            //std::cout << "infect gp " << i << '\n';
+            for (uint v = 0; v < N_ag; ++v) {
+                auto& aggp = cgpp[i].nds[v];
+                if (aggp.size() == 0) continue;
 
-        std::unordered_map<uint, std::vector<uint>> icnt; // contact group id
-        for (uint i = 0; i < I.size(); ++i) {
-            auto u = I[i];
-            for (auto& cgp : u.getGroups()[period]) {
-                uint gid = cgp.getID();
-                if (!icnt.count(gid)) {
-                    icnt[gid].resize(N_ag);
+                double m = 1;
+                for (uint u = 0; u < N_ag; ++u) {
+                    m *= std::pow(1 - cgpp[i].cm.getRate(u, v) * ptrans[v], icnt[i][u]);
                 }
-                ++icnt[gid][u.getAge()];
+
+                //std::cout << "infect prob " << 1 - m << " on " << aggp.size() << '\n';
+                int k = Random::bino_dis(aggp.size(), 1 - m);
+                for (auto c : Random::choose(aggp.size(), k)) {
+                    //std::cout << "choose " << aggp[c] << " state " << ndp[aggp[c]].stateID << '\n';
+                    if (ndp[aggp[c]].stateID == src) {
+                        re.push_back(aggp[c]);
+                        ndp[aggp[c]].stateID = des;
+                    }
+                }
             }
-        }
-
-        std::unordered_set<uint> sus2i; // node id
-        for (auto& p : icnt) {
-            Sus[p.first].infected(p.second, ptrans, sus2i);
-        }
-
-        Nodes re;
-        for (auto v : sus2i) {
-            Sus.erase(Node(&ndp[v]));
-            re.push_back(Node(&ndp[v]));
         }
         return re;
     }
 
-    inline Nodes vaccination() {
-        //std::cout << "vaccination\n";
+    std::vector<uint> vaccination(char src) {
         static uint vacc_idx = 0;
-        Nodes re;
+        std::vector<uint> re;
         uint cnt = 0;
         while (cnt < vaccine_population && vacc_idx < vacc_order.size()) {
-            Node cur = vacc_order[vacc_idx];
-            //std::cout << "try vacc " << cur.getID() << '\n';
-            if (cur.getState() == 'S') {
-                //std::cout << "vacc " << cur.getID() << '\n';
-                S.erase(cur);
+            uint cur = vacc_order[vacc_idx];
+            if (ndp[cur].stateID == src) {
                 re.push_back(cur);
                 ++cnt;
             }
@@ -159,17 +170,18 @@ protected:
     void simulate_unit(const Time::TimeStep& ts) {
         //std::cout << "----simulate unit " << ts.getDay() << ' ' << ts.getPeriod() << "----\n";
         
-        Nodes s2e = infection(S, ts.getPeriod(), prob_transmission);
-        Nodes f2e = infection(F, ts.getPeriod(), prob_transmission);
+        std::vector<uint> s2e = infection('S', 'E', ts.getPeriod(), prob_transmission); // chged
+        std::vector<uint> f2e = infection('F', 'E', ts.getPeriod(), prob_transmission); // chged
+        std::vector<uint> v2e = infection('V', 'E', ts.getPeriod(), prob_transmission_vacc); // chged
 
-        Nodes e2i = E.expire();
-        Nodes i2frd = I.expire(), i2f, i2r, i2d;
+        std::vector<uint> e2i = E.expire();
+        std::vector<uint> i2frd = I.expire(), i2f, i2r, i2d;
         for (const auto& v : i2frd) {
-            double pd = prob_death[v.getAge()];
+            double pd = prob_death[ndp[v].age];
             if (Random::trail(pd)) {
                 i2d.push_back(v);
             }
-            else if (Random::trail(prob_immute[v.getAge()] / (1 - pd))) {
+            else if (Random::trail(prob_immute[ndp[v].age] / (1 - pd))) {
                 i2r.push_back(v);
             }
             else {
@@ -177,47 +189,44 @@ protected:
             }
         }
 
-        s2e.setState('E');
-        for (auto& v : s2e) E.insert(v);
+        for (auto v : s2e) E.insert(v);
+        for (auto v : f2e) E.insert(v);
+        for (auto v : v2e) E.insert(v);
+        for (auto v : e2i) pushInfector(v);
 
-        f2e.setState('E');
-        for (auto& v : f2e) E.insert(v);
+        for (auto v : i2f) {
+            popInfector(v);
+            ndp[v].stateID = 'F';
+        }
+        for (auto v : i2r) {
+            popInfector(v);
+            ndp[v].stateID = 'R';
+        }
+        for (auto v : i2d) {
+            popInfector(v);
+            ndp[v].stateID = 'D';
+        }
 
-        e2i.setState('I');
-        for (auto& v : e2i) I.insert(v);
-
-        i2f.setState('F');
-        for (auto& v : i2f) F.insert(v);
-
-        i2r.setState('R');
-        for (auto& v : i2r) R.insert(v);
-
-        i2d.setState('D');
-        for (auto& v : i2d) D.insert(v);
-
-        Nodes s2v = vaccination();
-
-        Nodes v2e = infection(V, ts.getPeriod(), prob_transmission_vacc);
+        std::vector<uint> s2v;
+        if (ts.getPeriod() == 0) s2v = vaccination('S');
+        for (auto v : s2v) ndp[v].stateID = 'V';
 
         statisticUnit(ts, v2e, s2v, s2e, f2e, e2i, i2f, i2r, i2d);
-
-        v2e.setState('E');
-        for (auto& v : v2e) E.insert(v);
-
-        s2v.setState('V');
-        for (auto& v : s2v) V.insert(v);
     }
 
     // to override
     virtual void statisticInit() = 0;
-    virtual void statisticUnit(const Time::TimeStep& ts, const Nodes& v2e, const Nodes& s2v, const Nodes& s2e, const Nodes& f2e, const Nodes& e2i, const Nodes& i2f, const Nodes& i2r, const Nodes& i2d) = 0;
+    virtual void statisticUnit(const Time::TimeStep& ts, const std::vector<uint>& v2e, const std::vector<uint>& s2v, const std::vector<uint>& s2e, const std::vector<uint>& f2e, const std::vector<uint>& e2i, const std::vector<uint>& i2f, const std::vector<uint>& i2r, const std::vector<uint>& i2d) = 0;
     virtual void statisticEnd() = 0;
 
-    SuspictibleState S, F, V;
+    //SuspictibleState S, F, V;
     ExpiringState E, I;
-    StableState R, D;
+    //StableState R, D;
 
-    Nodes vacc_order;
+    std::vector<uint> icnt_all;
+    std::vector<std::vector<uint>> icnt;
+
+    std::vector<uint> vacc_order;
 
     uint vaccine_population;
     double vaccine_efficiency;

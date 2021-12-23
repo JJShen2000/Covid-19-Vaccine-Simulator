@@ -7,7 +7,7 @@ using namespace std;
 
 int main(int argc, char* argv[]) {
 
-    if (argc != 6) {
+    if (argc != 7) {
         std::cout << "arg error\n";
         return 1;
     }
@@ -22,7 +22,8 @@ int main(int argc, char* argv[]) {
     ifstream in_init(p_init);
     ifstream in_vacc(p_vacc);
 
-    string out_fname = argv[5];
+    string out_state_fname = argv[5];
+    string out_anal_fname = argv[6];
 
     if (!in_graph) {
         cout << "fail to open " << p_graph << '\n';
@@ -43,7 +44,8 @@ int main(int argc, char* argv[]) {
 
     SFEIRVDSimulation model;
     model.load(in_graph, in_param, in_init, in_vacc);
-    model.setOutFile(out_fname);
+    model.setStateOutFile(out_state_fname);
+    model.setAnalOutFile(out_anal_fname);
 
     model.simulate();
 

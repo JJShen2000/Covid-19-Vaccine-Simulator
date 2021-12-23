@@ -5,7 +5,6 @@ no_leaky=0
 
 aon_fn="sfeirvd_aon"
 leaky_fn="sfeirvd_leaky"
-analysis_fn="analysis"
 
 data_dir="../../data/sim_data/"
 graph_dir="${data_dir}graph/*"
@@ -57,9 +56,10 @@ leaky()
 					ct="$(echo "$conf" | awk -F / '{print $NF}' | sed 's/.txt//; s/.conf//')"
 					it="$(echo "$init_infector" | awk -F / '{print $NF}' | sed 's/.txt//; s/.conf//')"
 					vt="$(echo "$vaccine" | awk -F / '{print $NF}' | sed 's/.txt//; s/.conf//')"
-					dump_fn="$(echo "${dump_dir}${leaky_fn}_${gt}_${ct}_${it}_${vt}.csv")"
+					dump_state_fn="$(echo "${dump_dir}${leaky_fn}_${gt}_${ct}_${it}_${vt}_state.csv")"
+					dump_anal_fn="$(echo "${dump_dir}${leaky_fn}_${gt}_${ct}_${it}_${vt}_anal.csv")"
 
-					./${leaky_fn} $graph $conf $init_infector $vaccine $dump_fn
+					./${leaky_fn} $graph $conf $init_infector $vaccine $dump_state_fn $dump_anal_fn
 					wait
 				done
 			done
@@ -84,33 +84,10 @@ all_or_nothing()
 					ct="$(echo "$conf" | awk -F / '{print $NF}' | sed 's/.txt//; s/.conf//')"
 					it="$(echo "$init_infector" | awk -F / '{print $NF}' | sed 's/.txt//; s/.conf//')"
 					vt="$(echo "$vaccine" | awk -F / '{print $NF}' | sed 's/.txt//; s/.conf//')"
-					dump_fn="$(echo "${dump_dir}${aon_fn}_${gt}_${ct}_${it}_${vt}.csv")"
-					echo "${aon_fn}_${gt}_${ct}_${it}_${vt}"
+					dump_state_fn="$(echo "${dump_dir}${aon_fn}_${gt}_${ct}_${it}_${vt}_state.csv")"
+					dump_anal_fn="$(echo "${dump_dir}${aon_fn}_${gt}_${ct}_${it}_${vt}_anal.csv")"
 
-					./${aon_fn} $graph $conf $init_infector $vaccine $dump_fn
-					wait
-				done
-			done
-		done
-	done
-}
-
-analysis()
-{
-	echo "analyzing model"
-
-	for graph in ${graph_dir}; do
-		for conf in ${conf_dir}; do
-			for init_infector in ${init_infector_dir}; do
-				for vaccine in ${vaccine_dir}; do
-					gt="$(echo "$graph" | awk -F / '{print $NF}' | sed 's/.txt//; s/.conf//')"
-					ct="$(echo "$conf" | awk -F / '{print $NF}' | sed 's/.txt//; s/.conf//')"
-					it="$(echo "$init_infector" | awk -F / '{print $NF}' | sed 's/.txt//; s/.conf//')"
-					vt="$(echo "$vaccine" | awk -F / '{print $NF}' | sed 's/.txt//; s/.conf//')"
-					dump_fn="$(echo "${dump_dir}${analysis_fn}_${gt}_${ct}_${it}_${vt}.csv")"
-					echo "${analysis_fn}_${gt}_${ct}_${it}_${vt}"
-
-					./${analysis_fn} $graph $conf $init_infector $vaccine $dump_fn
+					./${aon_fn} $graph $conf $init_infector $vaccine $dump_state_fn $dump_anal_fn
 					wait
 				done
 			done
@@ -123,9 +100,8 @@ main()
 	preprocess $@
 	makef
 
-	#leaky
-	#all_or_nothing
-	analysis
+#	leaky
+	all_or_nothing
 
 	makec
 }

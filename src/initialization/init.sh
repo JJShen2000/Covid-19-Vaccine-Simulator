@@ -9,4 +9,4 @@ echo "Generating init infector doc"
 python3 init_infectors.py
 
 echo "Generating vaccination docs"
-#python3 vaccine_order.py
+python3 vaccine_order.py

@@ -14,6 +14,8 @@ struct Group {
 
     ContactMatrix cm;
     uint id;
+    uint period;
+    std::vector<std::vector<uint>> nds;
 };
 
 class ContactGroup {

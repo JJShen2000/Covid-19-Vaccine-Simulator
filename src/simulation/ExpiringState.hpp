@@ -10,21 +10,15 @@
 #include "Time.hpp"
 #include "Random.hpp"
 
-class ExpiringState : public std::vector<std::pair<Node, uint>> {
+class ExpiringState : public std::vector<std::pair<uint, uint>> {
 public:
-    void insert(const Node& u) {
-        std::vector<std::pair<Node, uint>>::push_back({u, setExpiringTime(u)});
+    inline void insert(int u) {
+        std::vector<std::pair<uint, uint>>::push_back({u, setExpiringTime()});
     }
 
-    inline void insert(const Nodes& nds) {
-        for (auto& v : nds) {
-            insert(v);
-        }
-    }
-
-    Nodes expire() {
-        Nodes exp;
-        std::vector<std::pair<Node, uint>> rev;
+    std::vector<uint> expire() {
+        std::vector<uint> exp;
+        std::vector<std::pair<uint, uint>> rev;
         for (auto v : *this) {
             if (--v.second) {
                 rev.push_back(v);
@@ -34,16 +28,16 @@ public:
                 
             }
         }
-        std::vector<std::pair<Node, uint>>::operator=(std::move(rev));
+        std::vector<std::pair<uint, uint>>::operator=(std::move(rev));
         return exp;
     }
 
     inline uint size() const {
-        return std::vector<std::pair<Node, uint>>::size();
+        return std::vector<std::pair<uint, uint>>::size();
     }
 
-    inline Node& operator[](uint i) {
-        return std::vector<std::pair<Node, uint>>::at(i).first;
+    inline uint operator[](uint i) {
+        return std::vector<std::pair<uint, uint>>::at(i).first;
     }
 
     inline void setAvgPeriod(double val) {
@@ -51,7 +45,7 @@ public:
     }
 
 protected:
-    uint setExpiringTime(const Node&) const {
+    uint setExpiringTime() const {
         return 1 + std::ceil(Random::exp_dis(avg_rate_m1));
     }
     double avg_rate_m1;
