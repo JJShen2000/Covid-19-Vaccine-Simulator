@@ -4,7 +4,7 @@
 #include <set>
 
 //#define DETAIL
-#define SHOW
+//#define SHOW
 // #define CHANGES
 
 #include "SFEIRVDModel.hpp"
@@ -282,7 +282,8 @@ protected:
         }
         for (auto& v : f2e) {
             ++cur_infec[ndp[v].loc][ndp[v].age];
-        } 
+        }
+        uint temp = 0;
 
         for (uint i = 0; i < N_lc; ++i) {
             for (uint j = 0; j < N_ag; ++j) {
@@ -294,11 +295,11 @@ protected:
                 double accum_iratio = accum_icnt[i][j] / (double)allcnt[i][j];
                 double vratio = accum_vcnt[i][j] / (double)allcnt[i][j];
                 fanal << dratio << ',' << accum_iratio << ',' << vratio << '\n';
-            
+                temp += cur_infec[i][j];
             }
         }
-
-        #ifdef SHOW
+        std::cout << p << '\t' << temp << '\n';
+#ifdef SHOW
         std::cout << p << "\t\t" << scnts << "\t\t" << fcnts << "\t\t" << ecnts << "\t\t" << icnts << "\t\t" << rcnts << "\t\t" << vcnts << "\t\t" << dcnts << "\n";
         #endif
 

@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <string>
 #include <fstream>
+#include <omp.h>
 
 // #include "SusceptibleState.hpp"
 #include "ExpiringState.hpp"
@@ -122,27 +123,31 @@ protected:
 
     inline std::vector<uint> infection(char src, char des, uint period, const std::vector<double>& ptrans) {
         std::vector<uint> re;
-        for (uint i = 0; i < N_gp; ++i) {
-            if (!icnt_all[i] || cgpp[i].period != period) continue;
-            //std::cout << "infect gp " << i << '\n';
-            for (uint v = 0; v < N_ag; ++v) {
-                auto& aggp = cgpp[i].nds[v];
-                if (aggp.size() == 0) continue;
+#pragma omp parallel
+        {
+            std::vector<uint> tre;
+#pragma omp for nowait
+            for (uint i = 0; i < N_gp; ++i) {
+                if (!icnt_all[i] || cgpp[i].period != period) continue;
+                for (uint v = 0; v < N_ag; ++v) {
+                    auto& aggp = cgpp[i].nds[v];
+                    if (aggp.size() == 0) continue;
 
-                double m = 1;
-                for (uint u = 0; u < N_ag; ++u) {
-                    m *= std::pow(1 - cgpp[i].cm.getRate(u, v) * ptrans[v], icnt[i][u]);
-                }
-
-                //std::cout << "infect prob " << 1 - m << " on " << aggp.size() << '\n';
-                int k = Random::bino_dis(aggp.size(), 1 - m);
-                for (auto c : Random::choose(aggp.size(), k)) {
-                    //std::cout << "choose " << aggp[c] << " state " << ndp[aggp[c]].stateID << '\n';
-                    if (ndp[aggp[c]].stateID == src) {
-                        re.push_back(aggp[c]);
-                        ndp[aggp[c]].stateID = des;
+                    double m = 1;
+                    for (uint u = 0; u < N_ag; ++u) {
+                        m *= std::pow(1 - cgpp[i].cm.getRate(u, v) * ptrans[v], icnt[i][u]);
+                    }
+                    int k = Random::bino_dis(aggp.size(), 1 - m);
+                    for (auto c : Random::choose(aggp.size(), k)) {
+                        if (__sync_bool_compare_and_swap(&ndp[aggp[c]].stateID, src, des))
+                            tre.push_back(aggp[c]);
                     }
                 }
+            }
+            
+#pragma omp critical
+            {
+                re.insert(re.end(), tre.begin(), tre.end());
             }
         }
         return re;

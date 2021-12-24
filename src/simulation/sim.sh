@@ -95,6 +95,32 @@ all_or_nothing()
 	done
 }
 
+analysis()
+{
+	for i in $(seq 1 10);do
+	for graph in ${graph_dir}; do
+		for conf in ${conf_dir}; do
+			for init_infector in ${init_infector_dir}; do
+				for vaccine in ${vaccine_dir}; do
+					gt="$(echo "$graph" | awk -F / '{print $NF}' | sed 's/.txt//; s/.conf//')"
+					ct="$(echo "$conf" | awk -F / '{print $NF}' | sed 's/.txt//; s/.conf//')"
+					it="$(echo "$init_infector" | awk -F / '{print $NF}' | sed 's/.txt//; s/.conf//')"
+					vt="$(echo "$vaccine" | awk -F / '{print $NF}' | sed 's/.txt//; s/.conf//')"
+
+					if [ $vt != "no_vaccine" ];then
+						continue
+					fi
+					echo $i
+					./${aon_fn} $graph $conf $init_infector $vaccine /dev/null /dev/null > ../../anal/result${i}.txt
+					wait
+				done
+			done
+		done
+	done
+	done
+}
+
+
 main()
 {
 	preprocess $@
@@ -102,6 +128,7 @@ main()
 
 #	leaky
 	all_or_nothing
+#	analysis
 
 	makec
 }

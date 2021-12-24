@@ -12,7 +12,8 @@
 class Random {
 public:
     inline static bool trail(double d) {
-        return std::uniform_real_distribution<double>(0.0, 1.0)(Random::gen) <= d;
+        thread_local std::mt19937_64 gen(std::random_device{}());
+        return std::uniform_real_distribution<double>(0.0, 1.0)(gen) <= d;
     }
 
     // inline static int uniform(int l, int r) {
@@ -23,9 +24,10 @@ public:
         // if (k > n) {
         //     std::cout << "[ERROR] n = " << n << ", k = " << k << '\n'; 
         // }
+        thread_local std::mt19937_64 gen(std::random_device{}());
         std::unordered_set<uint> ch;
         for (unsigned int r = n - k; r < n; ++r) {
-            if (!ch.insert(std::uniform_int_distribution<uint>(0, r)(Random::gen)).second) {
+            if (!ch.insert(std::uniform_int_distribution<uint>(0, r)(gen)).second) {
                 ch.insert(r);
             }
         }
@@ -33,17 +35,19 @@ public:
     }
 
     inline static double exp_dis(double lambda) {
-        return std::exponential_distribution<double>(lambda)(Random::gen);
+        thread_local std::mt19937_64 gen(std::random_device{}());
+        return std::exponential_distribution<double>(lambda)(gen);
     }
 
     inline static uint bino_dis(uint n, double p) {
-        return std::binomial_distribution<uint>(n, p)(Random::gen);
+        thread_local std::mt19937_64 gen(std::random_device{}());
+        return std::binomial_distribution<uint>(n, p)(gen);
     }
 
-protected:
-    static std::default_random_engine gen;
+//protected:
+//    static std::default_random_engine gen;
 };
 
-std::default_random_engine Random::gen(time(NULL));
+//std::default_random_engine Random::gen(time(NULL));
 
 #endif
