@@ -1,5 +1,6 @@
 import os
 import random
+import copy
 import numpy as np
 from load_data import load_data
 
@@ -52,7 +53,7 @@ class graph_init:
             self._assign_night_group_in_each_tract(tract_group)
 
         print("Applying worker flow")
-        self.node_day_tracts = self.node_night_tracts[:]
+        self.nodes_day = copy.deepcopy(self.nodes)
         workers_each_day_tract = list()
         for i in range(self.num_tracts):
             workers_each_day_tract.append(list())
@@ -63,12 +64,10 @@ class graph_init:
                 day_tract_idx = random.choices(list(range(self.num_tracts)), weights=weight_distribution, k=1)[0]
                 workers_each_day_tract[day_tract_idx].append(worker)
         for tract_idx in range(len(self.nodes)):
-            self.nodes[tract_idx][2] = workers_each_day_tract[tract_idx]
-            for wk in workers_each_day_tract[tract_idx]:
-                self.node_day_tracts[wk] = tract_idx
+            self.nodes_day[tract_idx][2] = workers_each_day_tract[tract_idx]
 
         print("Assigning contact groups at day")
-        for i, tract_group in enumerate(self.nodes):
+        for i, tract_group in enumerate(self.nodes_day):
             print("Processing tract: {}/{}".format(i+1, self.num_tracts))
             self._assign_day_group_in_each_tract(tract_group)
 
@@ -118,7 +117,7 @@ class graph_init:
         child1, child2, adult1, adult2 = tract_group
 
         '''Group play groups (index=2)'''
-        child_1 = child1[:]
+        child_1 = copy.deepcopy(child1)
         play_groups = self._assign_contact_group(child_1, 4)
         for i, group in enumerate(play_groups):
             self.group_type.append(2)
@@ -127,7 +126,7 @@ class graph_init:
         self.num_contact_groups += len(play_groups)
 
         '''Group daycares (index=3)'''
-        child_1 = child1[:]
+        child_1 = copy.deepcopy(child1)
         daycares = self._assign_contact_group(child_1, 14)
         for i, group in enumerate(daycares):
             self.group_type.append(3)
@@ -136,7 +135,7 @@ class graph_init:
         self.num_contact_groups += len(daycares)
 
         '''Group elementary schools (index=4)'''
-        child_2 = child2[:]
+        child_2 = copy.deepcopy(child2)
         elem_schools = self._assign_contact_group(child_2, 79)
         for i, group in enumerate(elem_schools):
             self.group_type.append(4)
@@ -145,7 +144,7 @@ class graph_init:
         self.num_contact_groups += len(elem_schools)
 
         '''Group middle schools (index=5)'''
-        child_2 = child2[:]
+        child_2 = copy.deepcopy(child2)
         mid_schools = self._assign_contact_group(child_2, 128)
         for i, group in enumerate(mid_schools):
             self.group_type.append(5)
@@ -154,7 +153,7 @@ class graph_init:
         self.num_contact_groups += len(mid_schools)
 
         '''Group high schools (index=6)'''
-        child_2 = child2[:]
+        child_2 = copy.deepcopy(child2)
         high_schools = self._assign_contact_group(child_2, 155)
         for i, group in enumerate(high_schools):
             self.group_type.append(6)
@@ -163,7 +162,7 @@ class graph_init:
         self.num_contact_groups += len(high_schools)
 
         '''Group work groups (index=7)'''
-        worker = adult1[:]
+        worker = copy.deepcopy(adult1)
         work_groups = self._assign_contact_group(worker, 20)
         for i, group in enumerate(work_groups):
             self.group_type.append(7)
