@@ -3,6 +3,14 @@ import pandas as pd
 import math
 import numpy as np
 
+worker_population_by_town = []
+
+def handle_wf(x):
+    # print(x)
+    ratio = x.sum() / worker_population_by_town[x.name]
+    x /= ratio
+    return x
+
 def get_n(df_age_population):
     """ Return the number of population(nodes)
     """
@@ -99,6 +107,7 @@ def get_age_population(df_census_tracts, df_age_population, seperate_ages=[5, 19
 
 
 def get_worker_flow(df_age_population, df_city_to_city_commute, df_city, df_town):
+    global worker_population_by_town
     worker_population_by_town = df_age_population[(df_age_population[2]>=19) & (df_age_population[2]<65)].drop([2], axis=1).groupby([0, 1], sort=False).sum()
     worker_population_by_city = worker_population_by_town.groupby([0], sort=False).sum()
     orther_area_worker_population = worker_population_by_city.iloc[-2] + worker_population_by_city.iloc[-1]
@@ -150,9 +159,16 @@ def get_worker_flow(df_age_population, df_city_to_city_commute, df_city, df_town
             wf_t2t[i][j] = math.floor(worker_population_by_town[i] * (wf_c2c[town2citycode[i]][town2citycode[j]] * (worker_population_by_town[j]/worker_population_by_city[town2citycode[j]])))
     
     df_wf_t2t = pd.DataFrame(wf_t2t)
-    for i in range(368):
-        ratio = df_wf_t2t.iloc[i].sum() / worker_population_by_town[i]
-        df_wf_t2t.iloc[i] /= ratio
+    df_wf_t2t = df_wf_t2t.apply(handle_wf, axis=1)
+
+    # # Checking the correctness of overwriting
+    # df_wf_t2t2 = pd.DataFrame(wf_t2t)
+    # for i in range(368):
+    #     ratio = df_wf_t2t2.iloc[i].sum() / worker_population_by_town[i]
+    #     df_wf_t2t2.iloc[i] /= ratio
+
+    # print(df_wf_t2t2.equals(df_wf_t2t))
+
     df_wf_t2t = df_wf_t2t.apply(np.floor).astype(int)
     wf = df_wf_t2t.T.values.tolist()
 
