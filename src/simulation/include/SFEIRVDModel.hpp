@@ -123,10 +123,10 @@ protected:
 
     inline std::vector<uint> infection(char src, char des, uint period, const std::vector<double>& ptrans) {
         std::vector<uint> re;
-#pragma omp parallel
+#pragma omp parallel num_threads(16)
         {
             std::vector<uint> tre;
-#pragma omp for nowait
+#pragma omp for schedule(dynamic, 128) nowait
             for (uint i = 0; i < N_gp; ++i) {
                 if (!icnt_all[i] || cgpp[i].period != period) continue;
                 for (uint v = 0; v < N_ag; ++v) {
