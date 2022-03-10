@@ -1,25 +1,29 @@
 #include <iostream>
 #include <fstream>
 
-#include "../SFEIRVDSimulation.hpp"
+#include "SFEIRVDSimulationLeaking.hpp"
 
 using namespace std;
 
+int main(int argc, char* argv[]) {
 
+    if (argc != 7) {
+        std::cout << "arg error\n";
+        return 1;
+    }
 
-int main() {
-
-    string p_graph = "./data/graph_10x10.txt";
-    string p_param = "./data/param_SFEIRVD.txt";
-    string p_init = "./data/init_SFEIRVD.txt";
-    string p_vacc = "./data/vacc_SFEIRVD.txt";
+    string p_graph = argv[1];
+    string p_param = argv[2];
+    string p_init = argv[3];
+    string p_vacc = argv[4];
 
     ifstream in_graph(p_graph);
     ifstream in_param(p_param);
     ifstream in_init(p_init);
     ifstream in_vacc(p_vacc);
 
-    string out_fname = "./data/statistic_10x10.csv";
+    string out_state_fname = argv[5];
+    string out_anal_fname = argv[6];
 
     if (!in_graph) {
         cout << "fail to open " << p_graph << '\n';
@@ -38,9 +42,10 @@ int main() {
         return 0;
     }
 
-    SFEIRVDSimulation model;
+    SFEIRVDSimulationLeaking model;
     model.load(in_graph, in_param, in_init, in_vacc);
-    model.setOutFile(out_fname);
+    model.setAnalOutFile(out_anal_fname);
+    model.setStateOutFile(out_state_fname);
 
     model.simulate();
 
