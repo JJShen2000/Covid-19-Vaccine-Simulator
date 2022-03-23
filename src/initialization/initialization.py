@@ -8,70 +8,103 @@ dump_dir = "../../data/sim_data/"
 
 class graph_init:
     def __init__(self):
-        self.data = load_data()
+        self.__load_data()
         self.build_graph()
         self.output_sim_data()
+
+    
+    def __load_data(self):
+        [   self.num_nodes,          # num. of population(nodes)
+            self.num_group_classes,  # num. of types of contact group
+            self.num_age_groups,     # num. of age group
+            self.contact_probs,      # dim: num_group_classes X num_age_groups X num_age_groups
+            self.age_population,     # (list of lists) dim: num_tracts X num_age_groups
+            self.worker_flow         # (list of lists) from town to town
+        ] = load_data()
+
+        self.num_tracts = len(self.age_population)
+        
     
     def build_graph(self):
         ''' Build the graph.
-        Return: the graph
         '''
-        self.num_nodes = self.data[0]
-        self.num_group_classes = self.data[1]
-        self.num_age_groups = self.data[2]
-        self.contact_probs = self.data[3]
-        self.age_population = self.data[4]
-        self.worker_flow = self.data[5]
-
-        self.num_tracts = len(self.age_population)
-
+        # Generating nodes(people)
         print("Generating nodes")
-        self.node_night_tracts = list()
+        group_tract_age_dir_path = os.path.join(dump_dir, "group_tract_age")
+
+        if not os.path.exists(group_tract_age_dir_path):
+            os.makedirs(group_tract_age_dir_path)
+
         self.nodes = list()     # self.nodes[i][j]: people in the j-th age group of the i-th tract
         num_curr = 0
-        if not os.path.exists(dump_dir + "group_tract_age"):
-            os.makedirs(dump_dir + "group_tract_age")
+
         for i, tract in enumerate(self.age_population):
             self.nodes.append(list())
-            for j, age in enumerate(tract):
-                self.nodes[i].append(list(range(num_curr, num_curr+age)))
-                self.node_night_tracts += ([i] * age)
-                num_curr += age
-                with open(dump_dir + "group_tract_age/" + str(i) + "-" + str(j) + ".txt", 'w') as f:
+            for j, population_age in enumerate(tract):
+                self.nodes[i].append(list(range(num_curr, num_curr+population_age)))
+                num_curr += population_age
+
+                # Output
+                with  open(os.path.join(self.group_tract_age_dir_path, f'{i}-{j}.txt'), 'w') as f:
                     line = str(len(self.nodes[i][j])) + ' \n'
-                    for p in self.nodes[i][j]:
-                        line += (str(p) + ' ')
+                    line += ' '.join(str(p) for p in self.nodes[i][j])
                     line += '\n'
                     f.write(line)
+        
+        # For output
+        self.node_night_tracts = list()
+        for i, tract in enumerate(self.age_population):
+            for population_age in tract:
+                self.node_night_tracts += ([i] * population_age)
 
         print("Assigning contact groups at night")
-        self.num_contact_groups = 0
-        self.group_type = list()
+        self.num_contact_groups = 0  # num. of group instances
+        self.group_type = list()     # Store types of each group by idx.
+        # Store contact group indices of each node(person)
         self.node_group_attr = np.full((self.num_nodes, self.num_group_classes), np.nan, dtype='uint64')
+
+        # Assigning contact groups at night
         for i, tract_group in enumerate(self.nodes):
             print("Processing tract: {}/{}".format(i+1, self.num_tracts))
             self._assign_night_group_in_each_tract(tract_group)
 
+        # Worker flow (nodes in night → nodes in day)
         print("Applying worker flow")
         self.nodes_day = copy.deepcopy(self.nodes)
-        workers_each_day_tract = list()
-        for i in range(self.num_tracts):
-            workers_each_day_tract.append(list())
+        workers_each_day_tract = [[] for _ in range(self.num_tracts)]
+
         for tract_idx, tract in enumerate(self.nodes):
             print("{}/{}".format(tract_idx+1, self.num_tracts))
             weight_distribution = self.worker_flow[tract_idx]
-            for worker in tract[2]:
+            for worker in tract[2]:  # tract[2]: The people in age group2(age 19-65)
                 day_tract_idx = random.choices(list(range(self.num_tracts)), weights=weight_distribution, k=1)[0]
                 workers_each_day_tract[day_tract_idx].append(worker)
+
         for tract_idx in range(len(self.nodes)):
             self.nodes_day[tract_idx][2] = workers_each_day_tract[tract_idx]
 
+        # Assigning contact groups at day
         print("Assigning contact groups at day")
         for i, tract_group in enumerate(self.nodes_day):
             print("Processing tract: {}/{}".format(i+1, self.num_tracts))
             self._assign_day_group_in_each_tract(tract_group)
 
+
     def _assign_night_group_in_each_tract(self, tract_group):
+        '''Assign night group in each tract.
+        
+        night groups: 
+            households = 7 people
+            clusters = 4 households
+            neighborhoods = 4 clusters
+
+            communities = 2000 people
+
+        Args: 
+            tract_group: A list of 4 lists(Each list represents a different age group). 
+        Returns:
+            None
+        '''
         child1, child2, adult1, adult2 = tract_group
 
         '''Group households (index=0)'''
@@ -84,7 +117,7 @@ class graph_init:
         self.num_contact_groups += len(households)
 
         '''Group clusters (index=1)'''
-        hs = list(range(0, len(households)))
+        hs = list(range(len(households)))
         clusters = self._assign_contact_group(hs, 4)
         for i, group in enumerate(clusters):
             self.group_type.append(1)
@@ -113,67 +146,88 @@ class graph_init:
                 self.node_group_attr[p, 9] = i + self.num_contact_groups
         self.num_contact_groups += len(communities)
 
+
     def _assign_day_group_in_each_tract(self, tract_group):
+        '''Assign day group in each tract.
+        
+        day groups: 
+            age 0-4: play groups, daycares
+            age 5-18: elementary schools, middle schools, high schools
+            age 19-64: work groups
+
+        Args: 
+            tract_group: A list of 4 lists(Each list represents a different age group). 
+        Returns:
+            None
+        '''
         child1, child2, adult1, adult2 = tract_group
 
         '''Group play groups (index=2)'''
-        child_1 = copy.deepcopy(child1)
-        play_groups = self._assign_contact_group(child_1, 4)
-        for i, group in enumerate(play_groups):
-            self.group_type.append(2)
-            for p in group:
-                self.node_group_attr[p, 2] = i + self.num_contact_groups
-        self.num_contact_groups += len(play_groups)
+        self.__assign_by_group_type(child1, 4, 2)
 
         '''Group daycares (index=3)'''
-        child_1 = copy.deepcopy(child1)
-        daycares = self._assign_contact_group(child_1, 14)
-        for i, group in enumerate(daycares):
-            self.group_type.append(3)
-            for p in group:
-                self.node_group_attr[p, 3] = i + self.num_contact_groups
-        self.num_contact_groups += len(daycares)
+        self.__assign_by_group_type(child1, 14, 3)
 
         '''Group elementary schools (index=4)'''
-        child_2 = copy.deepcopy(child2)
-        elem_schools = self._assign_contact_group(child_2, 79)
-        for i, group in enumerate(elem_schools):
-            self.group_type.append(4)
-            for p in group:
-                self.node_group_attr[p, 4] = i + self.num_contact_groups
-        self.num_contact_groups += len(elem_schools)
+        self.__assign_by_group_type(child2, 79, 4)
 
         '''Group middle schools (index=5)'''
-        child_2 = copy.deepcopy(child2)
-        mid_schools = self._assign_contact_group(child_2, 128)
-        for i, group in enumerate(mid_schools):
-            self.group_type.append(5)
-            for p in group:
-                self.node_group_attr[p, 5] = i + self.num_contact_groups
-        self.num_contact_groups += len(mid_schools)
+        self.__assign_by_group_type(child2, 128, 5)
 
         '''Group high schools (index=6)'''
-        child_2 = copy.deepcopy(child2)
-        high_schools = self._assign_contact_group(child_2, 155)
-        for i, group in enumerate(high_schools):
-            self.group_type.append(6)
-            for p in group:
-                self.node_group_attr[p, 6] = i + self.num_contact_groups
-        self.num_contact_groups += len(high_schools)
+        self.__assign_by_group_type(child2, 155, 6)
 
         '''Group work groups (index=7)'''
-        worker = copy.deepcopy(adult1)
-        work_groups = self._assign_contact_group(worker, 20)
-        for i, group in enumerate(work_groups):
-            self.group_type.append(7)
+        self.__assign_by_group_type(adult1, 20, 7)
+
+    
+    def __assign_by_group_type(self, people_list, group_size, group_type_idx):
+        people_list_cp = copy.deepcopy(people_list)
+        groups = self._assign_contact_group(people_list_cp, group_size)
+
+        for i, group in enumerate(groups):
+            self.group_type.append(group_type_idx)
             for p in group:
-                self.node_group_attr[p, 7] = i + self.num_contact_groups
-        self.num_contact_groups += len(work_groups)
+                self.node_group_attr[p, group_type_idx] = i + self.num_contact_groups
+        self.num_contact_groups += len(groups)
+
+
+    def _assign_contact_group(self, people_list, group_size):
+        '''Assign contact group.
+
+        Concept: Split people_list into sublist of length group_size randomly.
+
+        Args:
+            people_list: A list of nodes(int: serial numbers). e.g. [1,2,5,7,9]
+            group_size: Node number of contact group. 
+        Returns:
+            groups: A 2D list. len(groups) is the num. of groups. Each element is a group list(list of nodes).
+        '''
+        random.shuffle(people_list)
+
+        # number of groups
+        group_num = len(people_list) // group_size
+        remainder = len(people_list) % group_size
+
+        groups = [people_list[group_size*i : group_size*(i+1)] for i in range(group_num)]
+
+        # Assign remainder
+        if remainder > 0:
+            if remainder > group_num:
+                groups.append(people_list[group_size*group_num : ])
+            else:
+                for r in range(remainder):
+                    groups[r%group_num].append(people_list[group_size*group_num + r])
+
+        return groups
+
 
     def output_sim_data(self):
+        ''' Output the simulation data.
+        '''
         print("Generating graph.txt")
         with open(dump_dir + 'graph/graph.txt', 'w') as f:
-            line = str(self.num_nodes) + ' 2 ' + str(self.num_contact_groups) + ' ' + str(self.num_age_groups) + ' ' + str(self.num_group_classes) + ' ' + str(self.num_tracts) + ' \n'
+            line = f'{self.num_nodes} 2 {self.num_contact_groups} {self.num_age_groups} {self.num_group_classes} {self.num_tracts} \n'
             f.write(line)
 
             line = ''
@@ -194,34 +248,18 @@ class graph_init:
             for tract_group in self.nodes:
                 for j, age_group in enumerate(tract_group):
                     for p in age_group:
-                        line = str(j) + ' ' + str(self.node_night_tracts[p]) + ' \n'
+                        line = f'{j} {self.node_night_tracts[p]} \n'
                         if j == 0:
-                            line += ('2 ' + str(self.node_group_attr[p, 2]) + ' ' + str(self.node_group_attr[p, 3]) + ' \n')
+                            line += f'2 {self.node_group_attr[p, 2]} {self.node_group_attr[p, 3]} \n'
                         elif j == 1:
-                            line += ('3 ' + str(self.node_group_attr[p, 4]) + ' ' + str(self.node_group_attr[p, 5]) + ' ' + str(self.node_group_attr[p, 6]) + ' \n')
+                            line += f'3 {self.node_group_attr[p, 4]} {self.node_group_attr[p, 5]} {self.node_group_attr[p, 6]} \n'
                         elif j == 2:
-                            line += ('1 ' + str(self.node_group_attr[p, 7]) + ' \n')
+                            line += f'1 {self.node_group_attr[p, 7]} \n'
                         else:
-                            line += ('2 ' + str(self.node_group_attr[p, 8]) + ' ' + str(self.node_group_attr[p, 9]) + ' \n')
-                        line += ('4 ' + str(self.node_group_attr[p, 0]) + ' ' + str(self.node_group_attr[p, 1]) + ' ' + str(self.node_group_attr[p, 8]) + ' ' + str(self.node_group_attr[p, 9]) + ' \n')
+                            line += f'2 {self.node_group_attr[p, 8]} {self.node_group_attr[p, 9]} \n'
+                        line += f'4 {self.node_group_attr[p, 0]} {self.node_group_attr[p, 1]} {self.node_group_attr[p, 8]} {self.node_group_attr[p, 9]} \n'
                         f.write(line)
 
-    def _assign_contact_group(self, obj, size):
-        groups = list()
-        random.shuffle(obj)
-        group_num = len(obj) // size
-        remainder = len(obj) % size
-        for i in range(group_num):
-            groups.append(obj[size*i : size*(i+1)])
-
-        if remainder > 0:
-            if remainder > group_num:
-                groups.append(obj[size*group_num : ])
-            else:
-                for r in range(remainder):
-                    groups[r%group_num].append(obj[size*group_num + r])
-
-        return groups
 
 if __name__ == '__main__':
     graph_init()
