@@ -1,14 +1,21 @@
 CC = g++
-CXXFLAGS = -Wall -std=c++17 -g -O3 -fopenmp
-TARGETS = sfeirvd_aon sfeirvd_leaky
+INCLUDE = include
+CXXFLAGS = -Wall -std=c++17 -g -O3 -fopenmp -I$(INCLUDE)
+TARGETS = aon_simulation leaky_simulation
+SRC = $(wildcard lib/*.cpp)
+OBJ = $(addprefix build/, $(notdir $(SRC:.cpp=.o)))
 
-all: sfeirvd_aon sfeirvd_leaky
+all: $(TARGETS)
 
-sfeirvd_aon: run/run_sfeirvd_aon.cpp
+aon_simulation: $(filter-out build/leaky_simulation.o, $(OBJ))
 	$(CC) $^ -o $@ $(CXXFLAGS)
-sfeirvd_leaky: run/run_sfeirvd_leaky.cpp
+leaky_simulation: $(filter-out build/aon_simulation.o, $(OBJ))
 	$(CC) $^ -o $@ $(CXXFLAGS)
+build/%.o: lib/%.cpp
+	@if [ ! -d "./build" ]; then mkdir build; fi
+	$(CC) -c $< -o $@ $(CXXFLAGS)
 
 .PHONY: clean
 clean: 
-	rm -f $(TARGETS)
+	rm -f $(TARGETS) $(OBJ)
+	rm -rf build
