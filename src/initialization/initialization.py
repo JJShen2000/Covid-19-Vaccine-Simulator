@@ -45,7 +45,7 @@ class graph_init:
                 num_curr += population_age
 
                 # Output
-                with  open(os.path.join(self.group_tract_age_dir_path, f'{i}-{j}.txt'), 'w') as f:
+                with  open(os.path.join(group_tract_age_dir_path, f'{i}-{j}.txt'), 'w') as f:
                     line = str(len(self.nodes[i][j])) + ' \n'
                     line += ' '.join(str(p) for p in self.nodes[i][j])
                     line += '\n'
