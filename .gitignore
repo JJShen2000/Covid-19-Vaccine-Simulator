@@ -240,9 +240,6 @@ dkms.conf
 *.swp
 
 # other 
-
 data/*
 
-
-sfeirvd_aon
-sfeirvd_leaky
+simulation
