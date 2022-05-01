@@ -8,31 +8,29 @@
 //class Node;
 
 struct Group {
-    void setContactMatrix(const ContactMatrix& cmtx) {
-        cm = cmtx;
-    }
+    void setContactMatrix(const ContactMatrix& cmtx);
 
     ContactMatrix cm;
     uint id;
     uint period;
-    std::vector<std::vector<uint>> nds;
+    std::vector<uint> nds;
 };
 
 class ContactGroup {
 public:
-    ContactGroup() {}
+    ContactGroup();
 
-    ContactGroup(Group* gp) {
-        this->gp = gp;
-    }
+    ContactGroup(Group* gp);
 
-    inline uint getID() const {
-        return gp->id;
-    }
+    uint at(uint i) const;
 
-    inline ContactMatrix getContactMatrix() const {
-        return gp->cm;
-    }
+    uint getID() const;
+
+    ContactMatrix getContactMatrix() const;
+
+    uint getPeriod() const;
+
+    uint size() const;
 
     //uint size() const;
     // friend bool operator==(const ContactGroup&, const ContactGroup&);

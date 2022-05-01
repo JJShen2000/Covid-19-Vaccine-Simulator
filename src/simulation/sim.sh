@@ -3,8 +3,8 @@
 no_aon=0
 no_leaky=0
 
-aon_fn="aon_simulation"
-leaky_fn="leaky_simulation"
+aon_fn="sfeirvd_aon"
+leaky_fn="sfeirvd_leaky"
 
 data_dir="../../data/sim_data/"
 graph_dir="${data_dir}graph/*"
