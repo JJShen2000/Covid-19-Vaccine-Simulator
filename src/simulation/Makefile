@@ -8,7 +8,7 @@ OBJ = $(addprefix build/, $(notdir $(SRC:.cpp=.o)))
 all: $(TARGETS)
 
 $(TARGETS): $(OBJ)
-	$(CC) $^ -o $@ $(CXXFLAGS)
+	$(CC) $^ -o $@
 build/%.o: lib/%.cpp
 	@if [ ! -d "./build" ]; then mkdir build; fi
 	$(CC) -c $< -o $@ $(CXXFLAGS)
