@@ -4,6 +4,3 @@ if [[ ! -d "../../data/sim_data/group_tract_age/" || ! -f "../../data/sim_data/g
     echo "Generating graph.txt"
     python3 initialization.py
 fi
-
-echo "Generating init infector doc"
-python3 init_infectors.py
