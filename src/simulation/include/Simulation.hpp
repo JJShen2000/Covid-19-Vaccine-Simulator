@@ -7,7 +7,6 @@
 #include "ExpiringState.hpp"
 #include "BaseModel.hpp"
 #include "Heap.hpp"
-#include "Heap.cpp"
 
 class Simulation : public BaseModel {
 public:
