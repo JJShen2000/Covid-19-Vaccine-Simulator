@@ -74,10 +74,10 @@ protected:
     // fatality rate of I_sym
     std::vector<double> prob_death_sym;
 
-    // immute rate of I_asym
-    std::vector<double> prob_immute_asym;
-    std::vector<double> prob_immute_sym;
-    std::vector<double> prob_immute_sym_cond_nd;
+    // immune rate of I_asym
+    std::vector<double> prob_immune_asym;
+    std::vector<double> prob_immune_sym;
+    std::vector<double> prob_immune_sym_cond_nd;
 };
 
 #endif

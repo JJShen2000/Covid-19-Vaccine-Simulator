@@ -101,8 +101,8 @@ param_name3 num3
     - average period of an exposed individual
 - prob_death
     - after state I, probability to be death
-- prob_immute
-    - after state I, probability to recover and immute
+- prob_immune
+    - after state I, probability to recover and immune
 - vaccine_population
     - integer
     - vaccine population per day

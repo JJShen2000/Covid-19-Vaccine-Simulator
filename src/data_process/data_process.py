@@ -14,12 +14,12 @@ def create_dump_dir():
         os.mkdir('../../data/sim_data')
         os.mkdir('../../data/sim_data/graph')
         os.mkdir('../../data/sim_data/conf')
-        os.mkdir('../../data/sim_data/init_infector')
-        os.mkdir('../../data/sim_data/vaccine')
+        os.mkdir('../../data/sim_data/init_infectors')
+        os.mkdir('../../data/sim_data/vaccine_strat')
         os.mkdir('../../data/vis_data')
 
 def get_census_tracts():
-    with open('../../input/age_population_raw.csv') as rcsv:
+    with open('../../input/census/age_population_raw.csv') as rcsv:
         data = csv.reader(rcsv)
         next(data)
 
@@ -43,7 +43,7 @@ def get_census_tracts():
                 writer.writerow([city, id_census_tracts[id]])
 
 def get_age_population():
-    with open('../../input/age_population_raw.csv') as rcsv:
+    with open('../../input/census/age_population_raw.csv') as rcsv:
         data = csv.reader(rcsv)
         next(data)
         
@@ -66,7 +66,7 @@ def get_age_population():
                 writer.writerow([city, loc, age, s[k]])
 
 def get_town_population():
-    with open('../../input/town_population_raw.csv', encoding='big5') as rcsv:
+    with open('../../input/census/town_population_raw.csv', encoding='big5') as rcsv:
         data = csv.reader(rcsv)
         next(data)
         next(data)
@@ -78,7 +78,7 @@ def get_town_population():
                 writer.writerow([row[1], row[3], row[4], row[7], row[8], row[11]])
 
 def get_city_to_city_commute():
-    with open('../../input/city_to_city_commute_raw.csv', encoding='utf-8') as rcsv:
+    with open('../../input/census/city_to_city_commute_raw.csv', encoding='utf-8') as rcsv:
         data = csv.reader(rcsv)
 
         with open(dump_dir + 'city_to_city_commute.csv', 'w') as csvf:
@@ -93,12 +93,15 @@ def get_city_to_city_commute():
                 writer.writerow(row)
 
 def get_contact_prob():
-    copyfile('../../input/contact_prob.csv', dump_dir + 'contact_prob.csv')
+    copyfile('../../input/census/contact_prob.csv', dump_dir + 'contact_prob.csv')
 
 def get_configurations():
-    for file in os.listdir("../../input/covid_conf/"):
-        copyfile("../../input/covid_conf/" + file, '../../data/sim_data/conf/' + file)
+    for file in os.listdir("../../input/covid_param/"):
+        copyfile("../../input/covid_param/" + file, '../../data/sim_data/conf/' + file)
 
+def get_vaccine_strategy():
+    for file in os.listdir("../../input/vaccine_strat/"):
+        copyfile("../../input/vaccine_strat/" + file, '../../data/sim_data/vaccine_strat/' + file)
 
 if __name__ == '__main__':
     create_dump_dir()
@@ -108,3 +111,4 @@ if __name__ == '__main__':
     get_city_to_city_commute()
     get_contact_prob()
     get_configurations()
+    get_vaccine_strategy()

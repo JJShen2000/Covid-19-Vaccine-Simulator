@@ -53,15 +53,15 @@ void Simulation::loadParam(std::istream& in) {
 
     prob_death_sym = mp["prob_death_sym"];
 
-    prob_immute_asym = mp["prob_immute_asym"];
-    prob_immute_sym = mp["prob_immute_sym"];
+    prob_immune_asym = mp["prob_immune_asym"];
+    prob_immune_sym = mp["prob_immune_sym"];
     // cout << "get all\n";
     for (uint i = 0; i < N_ag; ++i) {
         if (prob_death_sym[i] == 1) {
-            prob_immute_sym_cond_nd.push_back(0);
+            prob_immune_sym_cond_nd.push_back(0);
         }
         else
-            prob_immute_sym_cond_nd.push_back(prob_immute_sym[i] / (1 - prob_death_sym[i]));
+            prob_immune_sym_cond_nd.push_back(prob_immune_sym[i] / (1 - prob_death_sym[i]));
     }
 }
 
@@ -224,9 +224,9 @@ void Simulation::simulate_unit(const Time::TimeStep& ts) {
     Nodes sym_not_d;
     cout << "expire\n";
     partitionGroupAge(I_sym.expire(), trans.k2d, sym_not_d, prob_death_sym);
-    partitionGroupAge(sym_not_d, trans.k2r, trans.k2f, prob_immute_sym);
+    partitionGroupAge(sym_not_d, trans.k2r, trans.k2f, prob_immune_sym);
 
-    partitionGroupAge(I_asym.expire(), trans.j2r, trans.j2f, prob_immute_sym_cond_nd);
+    partitionGroupAge(I_asym.expire(), trans.j2r, trans.j2f, prob_immune_sym_cond_nd);
 
     trans.e2i = E.expire();
 
