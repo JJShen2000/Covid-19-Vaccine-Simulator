@@ -61,11 +61,25 @@ choropleth_page = html.Div(
                 children=[
                     html.H3('Select Scenario 1.'),
                     dcc.Dropdown(
-                        id="scenario_dropdown1",
+                        id="sc1_conf",
                         options=[
-                            {'label': i, 'value': i} for i in data_c.scenarioes
+                            {'label': data_c.scenario_conf[i], 'value': i} for i in data_c.scenario_conf_keys
                         ],
-                        value=data_c.scenarioes[0]
+                        value=data_c.scenario_conf_keys[0]
+                    ),
+                    dcc.Dropdown(
+                        id="sc1_init_infector",
+                        options=[
+                            {'label': data_c.scenario_init_infectors[i], 'value': i} for i in data_c.scenario_init_infectors_keys
+                        ],
+                        value=data_c.scenario_init_infectors_keys[0]
+                    ),
+                    dcc.Dropdown(
+                        id="sc1_vaccine_strategy",
+                        options=[
+                            {'label': data_c.scenario_vaccine_strategies[i], 'value': i} for i in data_c.scenario_vaccine_strategies_keys
+                        ],
+                        value=data_c.scenario_vaccine_strategies_keys[0]
                     ),
                     dcc.Graph(id="choropleth1"),
                 ]
@@ -75,11 +89,25 @@ choropleth_page = html.Div(
                 children=[
                     html.H3('Select Scenario 2.'),
                     dcc.Dropdown(
-                        id="scenario_dropdown2",
+                        id="sc2_conf",
                         options=[
-                            {'label': i, 'value': i} for i in data_c.scenarioes
+                            {'label': data_c.scenario_conf[i], 'value': i} for i in data_c.scenario_conf_keys
                         ],
-                        value=data_c.scenarioes[1] if len(data_c.scenarioes)>1 else data_c.scenarioes[0]
+                        value=data_c.scenario_conf_keys[1]
+                    ),
+                    dcc.Dropdown(
+                        id="sc2_init_infector",
+                        options=[
+                            {'label': data_c.scenario_init_infectors[i], 'value': i} for i in data_c.scenario_init_infectors_keys
+                        ],
+                        value=data_c.scenario_init_infectors_keys[1]
+                    ),
+                    dcc.Dropdown(
+                        id="sc2_vaccine_strategy",
+                        options=[
+                            {'label': data_c.scenario_vaccine_strategies[i], 'value': i} for i in data_c.scenario_vaccine_strategies_keys
+                        ],
+                        value=data_c.scenario_vaccine_strategies_keys[1]
                     ),
                     dcc.Graph(id="choropleth2"),
                 ]

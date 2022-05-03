@@ -65,6 +65,16 @@ def calculate_ratio(x):
 
     return x
 
+
+# For columns name: num_..., ratio_...
+def calculate_ratio_state(x):
+    country_pop = pop_dict[x['Country'].replace('台','臺')][x['Age']]
+    for c in classes_ratio:
+        x[c] = x['num'+c[5:]]/country_pop
+
+    return x
+
+
 def get_information(df):
     num_age_group = df.Age.max()+1
 
@@ -88,19 +98,24 @@ def get_information(df):
     return num_age_group, columns, classes_num, classes_ratio
 
 
-def handle_data_choropleth(file_list):
-    print('Generating models/data_choropleth...')
+def handle_data_choropleth(file_list, verbose):
+    if verbose > 0:
+        print('Generating models/data_choropleth...')
     data_dir_path = os.path.join('models', 'data_choropleth')
 
     # mkdir models/data_choropleth
     if os.path.exists(data_dir_path):
-        # os.rmdir(data_choropleth_path)
         shutil.rmtree(data_dir_path, ignore_errors=True)
     os.mkdir(data_dir_path)
 
     num_age_group, columns, classes_num, classes_ratio = get_information(pd.read_csv(file_list[0]))
+
+    scenario_num = len(file_list)
+    cnt = 0
+
     # Processing  each scenario(csv file)
     for file in file_list:
+        cnt += 1
         df_file = pd.read_csv(file)
         scenario_name = os.path.splitext(os.path.basename(file))[0]
         d_scenario_path = os.path.join(data_dir_path, scenario_name)
@@ -110,17 +125,19 @@ def handle_data_choropleth(file_list):
             shutil.rmtree(d_scenario_path, ignore_errors=True)
         os.mkdir(d_scenario_path)
 
-        print('\tProcessing the '+d_scenario_path)
+        if verbose == 1:
+            print('\rProgress:',cnt,'/',scenario_num, end='')
+
+        if verbose > 1:
+            print('\tProcessing the '+d_scenario_path)
         
         # First transform Town from id to name
-        print('\t\tTransform df.Town from id to name ...', end='')
+        if verbose > 1:
+            print('\t\tTransform df.Town from id to name ...', end='')
 
-        # for idx in range(df_file.shape[0]):
-        #     # print('\r\t\tidx:'+str(idx+1)+'/'+str(df_file.shape[0]), end='')
-
-        #     df_file.loc[idx, 'Town'] = '/'.join(regions_dict[df_file.loc[idx, 'Town']])
         df_file['Town'] = df_file.apply(town_id2name, axis=1)
-        print('\r\t\tTransform df.Town from id to name (done)')
+        if verbose > 1:
+            print('\r\t\tTransform df.Town from id to name (done)')
         # print('col:',df_file.columns)
 
         for age in range(num_age_group):
@@ -134,7 +151,8 @@ def handle_data_choropleth(file_list):
 
         # Generating the data for all age groups
         file_path = os.path.join(d_scenario_path, 'all.csv')
-        print('Generating the file for all age groups(' + file_path + ')')
+        if verbose > 1:
+            print('Generating the file for all age groups(' + file_path + ')')
 
         df_all_age = df_file.groupby(['Period', 'Town'], sort=False, as_index = False).sum()
         for c in columns:
@@ -142,7 +160,92 @@ def handle_data_choropleth(file_list):
         df_all_age.to_csv(file_path, index=False)
 
 
-def handle_data_line_chart(file_list):
+def handle_data_line_chart_by_state(file_list):
+    data_dir_path = os.path.join('models', 'data_line_chart_by_state')
+
+    # mkdir models/data_line_chart_by_state
+    if os.path.exists(data_dir_path):
+        shutil.rmtree(data_dir_path, ignore_errors=True)
+    os.mkdir(data_dir_path)
+
+    global pop_dict
+    pop_dict = get_population_dict_by_country()
+
+    first_df = pd.read_csv(file_list[0])
+
+    columns = list(first_df.columns)
+    columns.remove('Period')
+    columns.remove('Town')
+    columns.remove('Age')
+
+    pop_taiwan = get_populationOfTaiwan()
+
+    global classes_ratio
+
+    classes_num = []
+    classes_ratio = []
+
+    for c in columns:
+        if 'ratio' in c or 'Ratio' in c:
+            classes_ratio.append(c)
+        else:
+            classes_num.append(c)
+
+    cnt = 0
+
+    # Processing  each scenario(csv file)
+    for file in file_list:
+        cnt += 1
+        print('Progress:',cnt,'/',len(file_list), end='\n')
+        
+        df_file = pd.read_csv(file)
+        df_file['Country'] = df_file.apply(town_id2c_name, axis=1)
+        df_file['Town'] = df_file.apply(town_id2t_name, axis=1)
+        
+        # Generating the df of all age
+        print('Generating the df of all age...')
+        pd_all_age = df_file.groupby(['Period', 'Country', 'Town'], sort=False, as_index = False).sum()
+        pd_all_age['Age'] = 4
+
+        df_file = pd.concat([df_file, pd_all_age])
+
+        # Generate the data composed of whole Taiwan
+        print('Generate the data composed of whole Taiwan...')
+        df_allt = df_file.drop(classes_ratio, axis=1).groupby(['Period', 'Age'], sort=False, as_index = False).sum()
+
+        for c in classes_ratio:
+            df_allt[c] = df_allt['num'+c[5:]]/pop_taiwan 
+
+        df_allt['Town'] = '全台'
+        df_allt['Country'] = '全台'
+
+        print('Generate the country data...')
+        print('\tGrouping...')
+        df_country = df_file.drop(classes_ratio, axis=1).groupby(['Period', 'Country', 'Age'], sort=False, as_index = False).sum()
+        print('\tCalculating ratio')
+        print(df_country.head())
+        df_country = df_country.apply(calculate_ratio_state, axis=1)
+        df_country['Town'] = '全部'
+        
+        print('Combine...')
+        df_file = pd.concat([df_file, df_allt, df_country])
+
+        print('Output...')
+        scenario_name = os.path.splitext(os.path.basename(file))[0]
+
+        scen_dir_path = os.path.join(data_dir_path, scenario_name)
+        os.mkdir(scen_dir_path)
+        for age in range(4):
+            file_dir_path = os.path.join(scen_dir_path, str(age)+'.csv')
+            mask = (df_file['Age'] == age)
+            df_file[mask].drop(['Age'], axis=1).to_csv(file_dir_path, index=False)
+        file_dir_path = os.path.join(scen_dir_path, 'all.csv')
+        mask = df_file['Age'] == 4
+        df_file[mask].drop(['Age'], axis=1).to_csv(file_dir_path, index=False)
+
+
+
+def handle_data_line_chart(file_list, mode=None):
     ''' Generating the csv file for line chart
     '''
     print('Generating models/data_line_chart.csv...')
@@ -192,7 +295,10 @@ def handle_data_line_chart(file_list):
     pop_taiwan = get_populationOfTaiwan()
 
     for c in classes_ratio:
-        df_allt[c] = df_allt[c[:-8]]/pop_taiwan
+        if mode:
+            df_allt[c] = df_allt['num'+c[5:]]/pop_taiwan 
+        else:
+            df_allt[c] = df_allt[c[:-8]]/pop_taiwan
     df_allt['Town'] = '全台'
     df_allt['Country'] = '全台'
 
@@ -200,18 +306,39 @@ def handle_data_line_chart(file_list):
     print('______________')
 
     df_country = pd_all_scenario.drop(classes_ratio, axis=1).groupby(['Period', 'scenario', 'Country', 'Age'], sort=False, as_index = False).sum()
-    # for idx in range(df_country.shape[0]):
-    #     country_pop = pop_dict[df_country.loc[idx, 'Country'].replace('台','臺')][df_country.loc[idx, 'Age']]
-    #     for c in classes:
-    #         df_country.loc[idx, 'ratio_'+c] = df_country.loc[idx, 'num_'+c]/country_pop
 
+    if mode:
+        df_country = df_country.apply(calculate_ratio_state, axis=1)
+    else:
+        df_country = df_country.apply(calculate_ratio, axis=1)
 
-    df_country = df_country.apply(calculate_ratio, axis=1)
 
     df_country['Town'] = '全部'
 
     pd_all_scenario = pd.concat([df_allt, pd_all_scenario, df_country])
-    pd_all_scenario.to_csv('models/data_line_chart.csv', index=False)
+    if mode:
+        data_dir_path = os.path.join('models', 'data_line_chart_state')
+
+        # mkdir models/data_line_chart_state
+        if os.path.exists(data_dir_path):
+            shutil.rmtree(data_dir_path, ignore_errors=True)
+        os.mkdir(data_dir_path)
+
+        scenario_list = pd_all_scenario.scenario.unique()
+
+        for scenario in scenario_list:
+            scen_dir_path = os.path.join(data_dir_path, scenario)
+            os.mkdir(scen_dir_path)
+            for age in range(4):
+                file_dir_path = os.path.join(scen_dir_path, str(age)+'.csv')
+                mask = (pd_all_scenario['scenario'] == scenario) & (pd_all_scenario['Age'] == age)
+                pd_all_scenario[mask].to_csv(file_dir_path, index=False)
+            file_dir_path = os.path.join(scen_dir_path, 'all.csv')
+            mask = (pd_all_scenario['scenario'] == scenario) & (pd_all_scenario['Age'] == 4)
+            pd_all_scenario[mask].to_csv(file_dir_path, index=False)
+    else:
+        pd_all_scenario.to_csv('models/data_line_chart.csv', index=False)
+
 
 
 def main():
@@ -221,6 +348,7 @@ def main():
     else:
         sim_data_dir_path = os.path.join("models", "sim_data", "*")
 
+    # print('argv2',sim_data_dir_path)
     global regions_dict
     regions_dict = generate_region_map_dict()
     file_list = glob.glob(sim_data_dir_path)
@@ -230,11 +358,25 @@ def main():
         print(str(i+1) + ':', f)
     print()
 
-    if '--nc' not in sys.argv:
-        handle_data_choropleth(file_list)
+    verbose = 0
+    if '--v1' in sys.argv or '-v1' in sys.argv:
+        verbose = 1
+    elif '--v2' in sys.argv or '-v2' in sys.argv:
+        verbose = 2
 
-    if '--nl' not in sys.argv:
+    if '--c' in sys.argv:
+        handle_data_choropleth(file_list, verbose=verbose)
+
+    if '--l'  in sys.argv and '--state' not in sys.argv:
         handle_data_line_chart(file_list)
+    
+    if '--l' in sys.argv:
+        handle_data_line_chart(file_list, mode='state')
+
+
+    if '--lc-s' in sys.argv:
+        handle_data_line_chart_by_state(file_list)
+    
 
         
 

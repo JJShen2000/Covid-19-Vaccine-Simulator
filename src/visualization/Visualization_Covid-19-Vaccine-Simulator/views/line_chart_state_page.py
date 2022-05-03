@@ -10,15 +10,36 @@ line_chart_state_page = html.Div(
             className="content",
             children=[
                 html.H2('Line Chart'),
-                html.H3('Select scenario'),
-                    dcc.Dropdown(
-                        id="lc-state-scenario_dp",
-                        options=[
-                            {'label': i, 'value': i} for i in data_l.scenario_list
-                        ],
-                        value=data_l.scenario_list[0],
-                        style={"width": "40%"}
+                html.H3('Select a scenario'),
+                dcc.Dropdown(
+                    id="lc-state-scenario_conf",
+                    options=[
+                        {'label': data_l.scenario_conf[i], 'value': i} for i in data_l.scenario_conf_keys
+                    ],
+                    value=data_l.scenario_conf_keys[0]
                 ),
+                dcc.Dropdown(
+                    id="lc-state-scenario_init_infector",
+                    options=[
+                        {'label': data_l.scenario_init_infectors[i], 'value': i} for i in data_l.scenario_init_infectors_keys
+                    ],
+                    value=data_l.scenario_init_infectors_keys[0]
+                ),
+                dcc.Dropdown(
+                    id="lc-state-scenario_vaccine_strategy",
+                    options=[
+                        {'label': data_l.scenario_vaccine_strategies[i], 'value': i} for i in data_l.scenario_vaccine_strategies_keys
+                    ],
+                    value=data_l.scenario_vaccine_strategies_keys[0]
+                ),
+                # dcc.Dropdown(
+                #     id="lc-state-scenario_dp",
+                #     options=[
+                #         {'label': i, 'value': i} for i in data_l.scenario_list
+                #     ],
+                #     value=data_l.scenario_list[0],
+                #     style={"width": "50%"}
+                # ),
                 html.H3('Select age group'),
                     dcc.Dropdown(
                         id="age_group_lc12",
@@ -54,7 +75,7 @@ line_chart_state_page = html.Div(
                             options=[
                                 {'label': i, 'value': i} for i in data_l.tracts
                             ],
-                            value=data_l.tracts[0]
+                            value='全台'
                     )],
                     style={"width": "10%", "display": "inline-block", "margin-right": "5%"}
                 ),

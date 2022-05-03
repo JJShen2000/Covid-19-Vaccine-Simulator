@@ -1,5 +1,6 @@
 from dash import html
 from dash import dcc
+import dash_gif_component as Gif
 
 import models.data_line_chart as data_l
 
@@ -61,7 +62,7 @@ line_chart_page = html.Div(
                             options=[
                                 {'label': i, 'value': i} for i in data_l.tracts
                             ],
-                            value=data_l.tracts[0]
+                            value='全台'
                     )],
                     style={"width": "10%", "display": "inline-block", "margin-right": "5%"}
                 ),
@@ -71,7 +72,12 @@ line_chart_page = html.Div(
                     )],
                     style={"width": "10%", "display": "inline-block"}
                 ),
-                dcc.Graph(id="line-chart")
+                dcc.Graph(id="line-chart"),
+                # html.Div(
+                #     [Gif.GifPlayer(
+                #         gif='assets/test.gif',still='assets/test.png', autoplay=True
+                #     )]
+                # )
             ]
         )
     ]
