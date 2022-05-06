@@ -116,10 +116,6 @@ double Simulation::epsilon_bar(char state, uint time) {
 void Simulation::infection(ExpiringState& ext, double tau, const Time::TimeStep& ts, Nodes& s2e, Nodes& v2e, Nodes& w2e, Nodes& f2e) {
     // cout << "one infection\n";
     // cout << "ext length " << ext.size() << '\n';
-#ifdef TEST_TIME
-    timeval st, ed;
-    gettimeofday(&st, 0);
-#endif
     for (auto& vec : ext) {
         // for (auto u : vec) {
         for (long unsigned int i = 0; i < vec.size(); ++i) {
@@ -186,10 +182,6 @@ void Simulation::infection(ExpiringState& ext, double tau, const Time::TimeStep&
             }
         }
     }
-#ifdef TEST_TIME
-    gettimeofday(&ed, 0);
-    cout << "Time: "<< ed.tv_sec - st.tv_sec + (ed.tv_usec - st.tv_usec) / 1000000.0 << " sec\n";
-#endif
 }
 
 void Simulation::partitionGroup(const Nodes& vorg, Nodes& v1, Nodes& v2, double p1) {
@@ -231,30 +223,54 @@ void Simulation::simulate_unit(const Time::TimeStep& ts) {
     Transition trans;
     // extract
     cout << "infect\n";
+#ifdef TEST_TIME
+    timeval st, ed;
+    gettimeofday(&st, 0);
+#endif
     infection(I_pre, tau_I_pre, ts, trans.s2e, trans.v2e, trans.w2e, trans.f2e);
     infection(I_asym, tau_I_asym, ts, trans.s2e, trans.v2e, trans.w2e, trans.f2e);
     infection(I_sym, tau_I_sym, ts, trans.s2e, trans.v2e, trans.w2e, trans.f2e);
-
+#ifdef TEST_TIME
+    gettimeofday(&ed, 0);
+    cout << "\tTime: "<< ed.tv_sec - st.tv_sec + (ed.tv_usec - st.tv_usec) / 1000000.0 << " sec\n";
+#endif
     partitionGroup(I_pre.expire(), trans.i2j, trans.i2k, sigma_asym);
 
     Nodes sym_not_d;
     cout << "expire\n";
+#ifdef TEST_TIME
+    gettimeofday(&st, 0);
+#endif
     partitionGroupAge(I_sym.expire(), trans.k2d, sym_not_d, prob_death_sym);
     partitionGroupAge(sym_not_d, trans.k2r, trans.k2f, prob_immune_sym);
 
     partitionGroupAge(I_asym.expire(), trans.j2r, trans.j2f, prob_immune_sym_cond_nd);
 
     trans.e2i = E.expire();
+#ifdef TEST_TIME
+    gettimeofday(&ed, 0);
+    cout << "\tTime: "<< ed.tv_sec - st.tv_sec + (ed.tv_usec - st.tv_usec) / 1000000.0 << " sec\n";
+#endif
 
     // vaccination
     if (ts.getPeriod() == 0) {
         cout << "vaccination\n";
+#ifdef TEST_TIME
+        gettimeofday(&st, 0);
+#endif
         vaccination(trans.s2v, trans.v2w);
+#ifdef TEST_TIME
+        gettimeofday(&ed, 0);
+        cout << "\tTime: "<< ed.tv_sec - st.tv_sec + (ed.tv_usec - st.tv_usec) / 1000000.0 << " sec\n";
+#endif
     }
         
     
     // insert
     cout << "update state\n";
+#ifdef TEST_TIME
+    gettimeofday(&st, 0);
+#endif
     for (auto v : trans.s2e) E.insert(v);
     for (auto v : trans.v2e) E.insert(v);
     for (auto v : trans.w2e) E.insert(v);
@@ -288,9 +304,19 @@ void Simulation::simulate_unit(const Time::TimeStep& ts) {
         ndp[v].stateID = 'W';
         ndp[v].ts = ts;
     }
+#ifdef TEST_TIME
+    gettimeofday(&ed, 0);
+    cout << "\tTime: "<< ed.tv_sec - st.tv_sec + (ed.tv_usec - st.tv_usec) / 1000000.0 << " sec\n";
+#endif
 
     // update score
     cout << "update score\n";
-
+#ifdef TEST_TIME
+    gettimeofday(&st, 0);
+#endif
     statisticUnit(ts, trans);
+#ifdef TEST_TIME
+    gettimeofday(&ed, 0);
+    cout << "\tTime: "<< ed.tv_sec - st.tv_sec + (ed.tv_usec - st.tv_usec) / 1000000.0 << " sec\n";
+#endif
 }
