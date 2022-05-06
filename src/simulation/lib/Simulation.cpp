@@ -1,4 +1,8 @@
 #include "Simulation.hpp"
+#define TEST_TIME
+#ifdef TEST_TIME
+#include <sys/time.h>
+#endif
 
 #include <iostream>
 void Simulation::loadGraph(std::istream& in) {
@@ -112,68 +116,80 @@ double Simulation::epsilon_bar(char state, uint time) {
 void Simulation::infection(ExpiringState& ext, double tau, const Time::TimeStep& ts, Nodes& s2e, Nodes& v2e, Nodes& w2e, Nodes& f2e) {
     // cout << "one infection\n";
     // cout << "ext length " << ext.size() << '\n';
+#ifdef TEST_TIME
+    timeval st, ed;
+    gettimeofday(&st, 0);
+#endif
     for (auto& vec : ext) {
-        for (auto u : vec) {
+        // for (auto u : vec) {
+        for (long unsigned int i = 0; i < vec.size(); ++i) {
             // cout << "infect from " << u << '\n';
-            for (auto& cgp : ndp[u].gp[ts.getPeriod()]) {
-                /*
-                std::vector<uint> re_s2e, re_v2e, re_w2e;
-                */
-                
-                
-                uint n = cgp.size();
-                double k = ceil(n * cgp.getContactMatrix().getPmax());
-                // cout << "try group " << cgp.getID() << ' ' << cgp.size() << ' ' << k << ' ' << cgp.getContactMatrix().getPmax() << '\n';
-                for (auto idx : Random::choose(n, k)) {
-                    // cout << "chosen " << k << " from " << n << '\n';
-                    uint v = cgp.at(idx);
-                    // cout << "get time\n";
-                    uint dt = ts - ndp[v].ts;
-                    // cout << "got time\n";
-                    double p = epsilon_bar(ndp[v].stateID, dt) * cgp.getContactMatrix().getRate(ndp[u].age, ndp[v].age) * tau;
-                    if (Random::trial(p * n / k)) {
-                        //
-                        switch (ndp[v].stateID) {
-                            case 'S':
-                                s2e.push_back(v);
-                                ndp[v].stateID = 'E';
-                                break;
-                            case 'V':
-                                v2e.push_back(v);
-                                ndp[v].stateID = 'E';
-                                break;
-                            case 'W':
-                                w2e.push_back(v);
-                                ndp[v].stateID = 'E';
-                                break;
-                            case 'F':
-                                f2e.push_back(v);
-                                ndp[v].stateID = 'E';
-                                break;
+            #pragma omp parallel num_threads(8)
+            {
+                std::vector<uint> tre_s2e, tre_v2e, tre_w2e, tre_f2e;
+                // #pragma omp for schedule(dynamic, 32) nowait
+                #pragma omp for
+                for (long unsigned int j = 0; j < ndp[vec[i]].gp[ts.getPeriod()].size(); ++j) {
+                    auto& cgp = ndp[vec[i]].gp[ts.getPeriod()][j];
+                    /*
+                    std::vector<uint> re_s2e, re_v2e, re_w2e;
+                    */
+                    
+                    uint n = cgp.size();
+                    double k = ceil(n * cgp.getContactMatrix().getPmax());
+                    // cout << "try group " << cgp.getID() << ' ' << cgp.size() << ' ' << k << ' ' << cgp.getContactMatrix().getPmax() << '\n';
+                    for (auto idx : Random::choose(n, k)) {
+                        // cout << "chosen " << k << " from " << n << '\n';
+                        uint v = cgp.at(idx);
+                        // cout << "get time\n";
+                        uint dt = ts - ndp[v].ts;
+                        // cout << "got time\n";
+                        double p = epsilon_bar(ndp[v].stateID, dt) * cgp.getContactMatrix().getRate(ndp[vec[i]].age, ndp[v].age) * tau;
+                        if (Random::trial(p * n / k)) {
+                            // switch (ndp[v].stateID) {
+                            //     case 'S':
+                            //         s2e.push_back(v);
+                            //         ndp[v].stateID = 'E';
+                            //         break;
+                            //     case 'V':
+                            //         v2e.push_back(v);
+                            //         ndp[v].stateID = 'E';
+                            //         break;
+                            //     case 'W':
+                            //         w2e.push_back(v);
+                            //         ndp[v].stateID = 'E';
+                            //         break;
+                            //     case 'F':
+                            //         f2e.push_back(v);
+                            //         ndp[v].stateID = 'E';
+                            //         break;
+                            // }
+                            
+                            if (__sync_bool_compare_and_swap(&ndp[v].stateID, 'S', 'E'))
+                                tre_s2e.push_back(v);
+                            else if (__sync_bool_compare_and_swap(&ndp[v].stateID, 'V', 'E'))
+                                tre_v2e.push_back(v);
+                            else if (__sync_bool_compare_and_swap(&ndp[v].stateID, 'W', 'E'))
+                                tre_w2e.push_back(v);
+                            else if (__sync_bool_compare_and_swap(&ndp[v].stateID, 'F', 'E'))
+                                tre_f2e.push_back(v);
                         }
-                        //
-
-                        /*
-                        if (__sync_bool_compare_and_swap(&ndp[v].stateID, 'S', 'E'))
-                            tre_s2e.push_back(aggp[c]);
-                        else if (__sync_bool_compare_and_swap(&ndp[v].stateID, 'V', 'E'))
-                            tre_v2e.push_back(aggp[c]);
-                        else if (__sync_bool_compare_and_swap(&ndp[aggp[c]].stateID, 'W', 'E'))
-                            tre_w2e.push_back(aggp[c]);
-                        else if (__sync_bool_compare_and_swap(&ndp[aggp[c]].stateID, 'F', 'E'))
-                            tre_f2e.push_back(aggp[c]);
-                        */
+                    }
+                    # pragma omp critical
+                    {
+                        s2e.insert(s2e.end(), tre_s2e.begin(), tre_s2e.end());
+                        v2e.insert(v2e.end(), tre_v2e.begin(), tre_v2e.end());
+                        w2e.insert(w2e.end(), tre_w2e.begin(), tre_w2e.end());
+                        f2e.insert(f2e.end(), tre_f2e.begin(), tre_f2e.end());
                     }
                 }
-
-                /*
-                s2e.insert(s2e.end(), tre_s2e.begin(), tre_s2e.end());
-                v2e.insert(v2e.end(), tre_v2e.begin(), tre_v2e.end());
-                w2e.insert(w2e.end(), tre_w2e.begin(), tre_w2e.end());
-                */
             }
         }
     }
+#ifdef TEST_TIME
+    gettimeofday(&ed, 0);
+    cout << "Time: "<< ed.tv_sec - st.tv_sec + (ed.tv_usec - st.tv_usec) / 1000000.0 << " sec\n";
+#endif
 }
 
 void Simulation::partitionGroup(const Nodes& vorg, Nodes& v1, Nodes& v2, double p1) {
