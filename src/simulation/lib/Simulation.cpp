@@ -117,16 +117,17 @@ void Simulation::infection(ExpiringState& ext, double tau, const Time::TimeStep&
     // cout << "one infection\n";
     // cout << "ext length " << ext.size() << '\n';
     for (auto& vec : ext) {
-        // for (auto u : vec) {
-        for (long unsigned int i = 0; i < vec.size(); ++i) {
+        #pragma omp parallel num_threads(8)
+        {
+            std::vector<uint> tre_s2e, tre_v2e, tre_w2e, tre_f2e;
+
+            #pragma omp for schedule(dynamic)
+            // for (auto u : vec) {
+            for (long unsigned int i = 0; i < vec.size(); ++i) {
             // cout << "infect from " << u << '\n';
-            #pragma omp parallel num_threads(8)
-            {
-                std::vector<uint> tre_s2e, tre_v2e, tre_w2e, tre_f2e;
-                // #pragma omp for schedule(dynamic, 32) nowait
-                #pragma omp for
-                for (long unsigned int j = 0; j < ndp[vec[i]].gp[ts.getPeriod()].size(); ++j) {
-                    auto& cgp = ndp[vec[i]].gp[ts.getPeriod()][j];
+                for (auto& cgp: ndp[vec[i]].gp[ts.getPeriod()]) {
+                // for (long unsigned int j = 0; j < ndp[vec[i]].gp[ts.getPeriod()].size(); ++j) {
+                //     auto& cgp = ndp[vec[i]].gp[ts.getPeriod()][j];
                     /*
                     std::vector<uint> re_s2e, re_v2e, re_w2e;
                     */
@@ -171,14 +172,15 @@ void Simulation::infection(ExpiringState& ext, double tau, const Time::TimeStep&
                                 tre_f2e.push_back(v);
                         }
                     }
-                    # pragma omp critical
-                    {
-                        s2e.insert(s2e.end(), tre_s2e.begin(), tre_s2e.end());
-                        v2e.insert(v2e.end(), tre_v2e.begin(), tre_v2e.end());
-                        w2e.insert(w2e.end(), tre_w2e.begin(), tre_w2e.end());
-                        f2e.insert(f2e.end(), tre_f2e.begin(), tre_f2e.end());
-                    }
                 }
+            }
+
+            # pragma omp critical
+            {
+                s2e.insert(s2e.end(), tre_s2e.begin(), tre_s2e.end());
+                v2e.insert(v2e.end(), tre_v2e.begin(), tre_v2e.end());
+                w2e.insert(w2e.end(), tre_w2e.begin(), tre_w2e.end());
+                f2e.insert(f2e.end(), tre_f2e.begin(), tre_f2e.end());
             }
         }
     }
