@@ -1,7 +1,10 @@
 import os
 import glob
+import sys
 import pandas as pd
 import csv
+import shutil
+import numpy as np
 
 # file/dir path
 repo_dir_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "..")
@@ -13,6 +16,7 @@ census_tracts_path = os.path.join(repo_dir_path, "data", "init_data", "census_tr
 age_population_path = os.path.join(repo_dir_path, "data", "init_data", "age_population.csv")
 
 output_dir_path = os.path.join(repo_dir_path, 'src', 'visualization', 'Visualization_Covid-19-Vaccine-Simulator', 'preprocessing', 'data')
+
 
 # data
 regions_dict = {}
@@ -85,13 +89,13 @@ def calculate_ratio_state(x):
     return x
 
 
-def handle_lc_scenario(file_list):
-
+def handle_lc_state(file_list):
+  
     # Set dir of output
     if not os.path.exists(output_dir_path):
         os.mkdir(output_dir_path)
 
-    data_dir_path = os.path.join(output_dir_path, 'lc_scenario')
+    data_dir_path = os.path.join(output_dir_path, 'lc_state')
     
     if not os.path.exists(data_dir_path):
         os.mkdir(data_dir_path)
@@ -131,24 +135,17 @@ def handle_lc_scenario(file_list):
         else:
             classes_num.append(c)
 
-    country_list = []
-    if town_opt_each:
-        country_list = list(pd.read_csv('census_tracts.csv', header=None)[0].unique())
-        country_list = [x.replace('臺', '台') for x in country_list]
-    country_list.append('全台')
-
-    for c in country_list:
-        country_path = os.path.join(data_dir_path, c)
-        if not os.path.exists(country_path):
-            os.mkdir(country_path)
-
     cnt = 0
 
+    # Processing  each scenario(csv file)
     for file in file_list:
         cnt += 1
         print('Progress:',cnt,'/',len(file_list), end='\n')
-        scenario_name = os.path.splitext(os.path.basename(file))[0].replace('_anal', '')
-
+        scen_dir_path = os.path.join(data_dir_path, os.path.splitext(os.path.basename(file))[0])
+        if os.path.exists(scen_dir_path):
+            print('\tExist!')
+            continue
+        
         df_file = pd.read_csv(file)
         if time_opt == 'D':
             df_file.rename(columns = {'Day':'Period'}, inplace = True)
@@ -159,14 +156,9 @@ def handle_lc_scenario(file_list):
         else:
             df_file['Country'] = '全台'
             df_file['Town'] = '全台'
-
+        
         # Generating the df of all age
         print('\tGenerating the df of all age...')
-        # key_col = ['Period', 'Country', 'Town']
-        # if time_opt == 'D':
-        #     key_col = ['Day', 'Country', 'Town']
-        # elif time_opt == 'E':
-        #     key_col = ['Country', 'Town']
         pd_all_age = df_file.groupby(['Period', 'Country', 'Town'], sort=False, as_index = False).sum()
         pd_all_age['Age'] = 4
 
@@ -178,7 +170,7 @@ def handle_lc_scenario(file_list):
             df_allt = df_file.drop(classes_ratio, axis=1).groupby(['Period', 'Age'], sort=False, as_index = False).sum()
 
             for c in classes_ratio:
-                df_allt[c] = df_allt[c[:-8]]/pop_taiwan
+                df_allt[c] = df_allt['num'+c[5:]]/pop_taiwan 
 
             df_allt['Town'] = '全台'
             df_allt['Country'] = '全台'
@@ -188,36 +180,26 @@ def handle_lc_scenario(file_list):
             print('\t\tGrouping...')
             df_country = df_file.drop(classes_ratio, axis=1).groupby(['Period', 'Country', 'Age'], sort=False, as_index = False).sum()
             print('\t\tCalculating ratio')
-            df_country = df_country.apply(calculate_ratio, axis=1)
+            df_country = df_country.apply(calculate_ratio_state, axis=1)
             df_country['Town'] = '全部'
-
+        
             # Combine
             print('\tCombine...')
             df_file = pd.concat([df_file, df_allt, df_country])
 
-        # Output
-        print('Output...')
-        for c in country_list:
-            df_country = df_file[df_file["Country"] == c]
-            for town in df_country.Town.unique():
-                mask = (df_country["Town"] == town)
-                local_df = df_country[mask]
-                local_df = local_df.drop(['Town', 'Country'], axis=1)
-                local_df['scenario'] = scenario_name
+        # Outout
+        print('\tOutput...')
+        scenario_name = os.path.splitext(os.path.basename(file))[0]
 
-                # if age == 4:
-                #   output_path = os.path.join(data_dir_path, c, 'all.csv')
-                # else:
-                #   output_path = os.path.join(data_dir_path, c, str(age)+'.csv')
-                output_path = os.path.join(data_dir_path, c, town+'.csv')
-
-
-                if file == file_list[0]:
-                    local_df.to_csv(output_path, index=False)
-                else:
-                    output_df = pd.read_csv(output_path)
-                    output_df = pd.concat([output_df, local_df])
-                    output_df.to_csv(output_path, index=False)
+        scen_dir_path = os.path.join(data_dir_path, scenario_name)
+        os.mkdir(scen_dir_path)
+        for age in range(4):
+            file_dir_path = os.path.join(scen_dir_path, str(age)+'.csv')
+            mask = (df_file['Age'] == age)
+            df_file[mask].drop(['Age'], axis=1).to_csv(file_dir_path, index=False)
+        file_dir_path = os.path.join(scen_dir_path, 'all.csv')
+        mask = df_file['Age'] == 4
+        df_file[mask].drop(['Age'], axis=1).to_csv(file_dir_path, index=False)
 
 
 if __name__ == '__main__':
@@ -227,5 +209,4 @@ if __name__ == '__main__':
     print('List of source data files:')
     for i, f in enumerate(file_list):
         print('\t' + str(i+1) + ':', os.path.basename(f))
-    handle_lc_scenario(file_list)
-
+    handle_lc_state(file_list)
