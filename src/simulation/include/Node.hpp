@@ -52,11 +52,6 @@ protected:
     Individual* inst;
 };
 
-class Nodes : public std::vector<Node> {
-public:
-    void setState(char s);
-};
-
 using NodePool = std::vector<Individual>;
 
 // class NodePool : public std::vector<Individual> {

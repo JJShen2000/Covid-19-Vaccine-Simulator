@@ -41,9 +41,13 @@ protected:
 
     void partitionGroupAge(const Nodes& vorg, Nodes& v1, Nodes& v2, const std::vector<double>& p1);
 
-    Nodes vaccination(Nodes& s2v, Nodes& v2w);
+    void vaccination(Nodes& s2v, Nodes& v2w, const Time::TimeStep& ts);
 
     void simulate_unit(const Time::TimeStep& ts);
+
+    void updateScore(const Time::TimeStep& ts);
+    void increaseScore(uint u, double tau, const Time::TimeStep& ts);
+    double infect_prob(uint u, uint v, const ContactGroup& cgp, double tau, const Time::TimeStep& ts);
 
     // statistic method
     virtual void statisticInit() = 0;
@@ -63,8 +67,8 @@ protected:
     double sigma_asym;
 
     // vaccine efficiency
-    std::vector<double> epsilon_V1;
-    std::vector<double> epsilon_V2;
+    std::vector<double> epsilon_V1_bar;
+    std::vector<double> epsilon_V2_bar;
     // priority queue to determine who to vaccinate
     heap<double, uint> vacc_queue;
     // vaccination rollout
@@ -80,6 +84,14 @@ protected:
     std::vector<double> prob_immune_asym;
     std::vector<double> prob_immune_sym;
     std::vector<double> prob_immune_sym_cond_nd;
+
+    // vaccination order
+    std::vector<double> score;
+
+    // vaccination start day
+    uint vacc_start_day;
+    // second dose start day
+    uint vacc_sec_start_day;
 };
 
 #endif

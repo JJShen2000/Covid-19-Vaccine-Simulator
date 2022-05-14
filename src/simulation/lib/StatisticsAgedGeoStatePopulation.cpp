@@ -129,19 +129,21 @@ void StatisticsAgedGeoStatePopulation::statisticUnit(const Time::TimeStep& ts, c
     else if (time_opt == TimeOpt::Daily && ts.getPeriod() == 0) {
         writeLine(ts);
     }
-    // using std::cout;
-    // if (trans.e2i.size()) { cout << "e2i: "; for (auto v : trans.e2i) cout << v << ' '; cout << '\n'; }
-    // if (trans.f2e.size()) { cout << "f2e: "; for (auto v : trans.f2e) cout << v << ' '; cout << '\n'; }
-    // if (trans.i2j.size()) { cout << "i2j: "; for (auto v : trans.i2j) cout << v << ' '; cout << '\n'; }
-    // if (trans.i2k.size()) { cout << "i2k: "; for (auto v : trans.i2k) cout << v << ' '; cout << '\n'; }
-    // if (trans.j2f.size()) { cout << "j2f: "; for (auto v : trans.j2f) cout << v << ' '; cout << '\n'; }
-    // if (trans.j2r.size()) { cout << "j2r: "; for (auto v : trans.j2r) cout << v << ' '; cout << '\n'; }
-    // if (trans.k2d.size()) { cout << "k2d: "; for (auto v : trans.k2d) cout << v << ' '; cout << '\n'; }
-    // if (trans.k2f.size()) { cout << "k2f: "; for (auto v : trans.k2f) cout << v << ' '; cout << '\n'; }
-    // if (trans.k2r.size()) { cout << "k2r: "; for (auto v : trans.k2r) cout << v << ' '; cout << '\n'; }
-    // if (trans.s2e.size()) { cout << "s2e: "; for (auto v : trans.s2e) cout << v << ' '; cout << '\n'; }
-    // if (trans.s2v.size()) { cout << "s2v: "; for (auto v : trans.s2v) cout << v << ' '; cout << '\n'; }
-    // if (trans.v2e.size()) { cout << "v2e: "; for (auto v : trans.v2e) cout << v << ' '; cout << '\n'; }
+    using std::cout;
+    if (trans.e2i.size()) { cout << "e2i: "; for (auto v : trans.e2i) cout << v << ' '; cout << '\n'; }
+    if (trans.f2e.size()) { cout << "f2e: "; for (auto v : trans.f2e) cout << v << ' '; cout << '\n'; }
+    if (trans.i2j.size()) { cout << "i2j: "; for (auto v : trans.i2j) cout << v << ' '; cout << '\n'; }
+    if (trans.i2k.size()) { cout << "i2k: "; for (auto v : trans.i2k) cout << v << ' '; cout << '\n'; }
+    if (trans.j2f.size()) { cout << "j2f: "; for (auto v : trans.j2f) cout << v << ' '; cout << '\n'; }
+    if (trans.j2r.size()) { cout << "j2r: "; for (auto v : trans.j2r) cout << v << ' '; cout << '\n'; }
+    if (trans.k2d.size()) { cout << "k2d: "; for (auto v : trans.k2d) cout << v << ' '; cout << '\n'; }
+    if (trans.k2f.size()) { cout << "k2f: "; for (auto v : trans.k2f) cout << v << ' '; cout << '\n'; }
+    if (trans.k2r.size()) { cout << "k2r: "; for (auto v : trans.k2r) cout << v << ' '; cout << '\n'; }
+    if (trans.s2e.size()) { cout << "s2e: "; for (auto v : trans.s2e) cout << v << ' '; cout << '\n'; }
+    if (trans.s2v.size()) { cout << "s2v: "; for (auto v : trans.s2v) cout << v << ' '; cout << '\n'; }
+    if (trans.v2e.size()) { cout << "v2e: "; for (auto v : trans.v2e) cout << v << ' '; cout << '\n'; }
+    if (trans.v2w.size()) { cout << "v2w: "; for (auto v : trans.v2w) cout << v << ' '; cout << '\n'; }
+    if (trans.w2e.size()) { cout << "w2e: "; for (auto v : trans.w2e) cout << v << ' '; cout << '\n'; }
 }
 
 void StatisticsAgedGeoStatePopulation::statisticEnd() {
