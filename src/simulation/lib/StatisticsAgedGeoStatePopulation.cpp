@@ -204,28 +204,28 @@ void StatisticsAgedGeoStatePopulation::transition(const Nodes& nodes, std::vecto
 
 void StatisticsAgedGeoStatePopulation::writeHeader() {
     if (time_opt == TimeOpt::Daily) {
-        (*out) << "\"Day\", ";
+        (*out) << "Day,";
     }
     else if (time_opt == TimeOpt::Periodic) {
-        (*out) << "\"Period\", ";
+        (*out) << "Period,";
     }
 
     if (town_opt == TownOpt::Each) {
-        (*out) << "\"Town\", ";
+        (*out) << "Town,";
     }
 
     if (age_opt == AgeOpt::Each) {
-        (*out) << "\"Age\", ";
+        (*out) << "Age,";
     }
 
     bool adddot = 0;
     for (uint i = 0; i < (uint)StateCntOpt::NState; ++i) {
         if (state_cnt_opt & (1 << i)) {
             if (adddot) {
-                (*out) << ", ";
+                (*out) << ",";
             }
             adddot = 1;
-            (*out) << "\"" << column_name[i] << " Number" << "\"";
+            (*out) << column_name[i] << " Number";
         }
     }
         
@@ -237,18 +237,18 @@ void StatisticsAgedGeoStatePopulation::writeLine(const Time::TimeStep& ts) {
     for (uint town = 0; town < (town_opt == TownOpt::Each? N_lc : 1); ++town) {
         for (uint age = 0; age < (age_opt == AgeOpt::Each? N_ag : 1); ++age) {
             if (time_opt == TimeOpt::Daily) {
-                (*out) << ts.getDay() << ", ";
+                (*out) << ts.getDay() << ",";
             }
             else if (time_opt == TimeOpt::Periodic) {
-                (*out) << ts.getPeriod() + ts.getPeriodLength() * ts.getDay() << ", ";
+                (*out) << ts.getPeriod() + ts.getPeriodLength() * ts.getDay() << ",";
             }
 
             if (town_opt == TownOpt::Each) {
-                (*out) << town << ", ";
+                (*out) << town << ",";
             }
 
             if (age_opt == AgeOpt::Each) {
-                (*out) << age << ", ";
+                (*out) << age << ",";
             }
 
             bool adddot = 0;
@@ -293,7 +293,7 @@ void StatisticsAgedGeoStatePopulation::writeTerm(uint town, uint age, bool& addd
     }
 
     if (adddot) {
-        (*out) << ", ";
+        (*out) << ",";
     }
     adddot = 1;
 
