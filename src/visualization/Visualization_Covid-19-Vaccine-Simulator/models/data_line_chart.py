@@ -1,8 +1,15 @@
 import pandas as pd
 import os
 import urllib
+import sys
+
+local_data = False
+if '--local' in sys.argv:
+    local_data = True
 
 base_url = 'https://raw.githubusercontent.com/JJShen2000/Visualization-Data_Covid-19-Vaccine-Simulator/main/data_line_chart_by_scenario/'
+if local_data:
+    base_url = os.path.join("preprocessing", "data", "lc_scenario")
 
 # Set information about age group for dropdown
 age_group_id = range(5)
@@ -11,7 +18,12 @@ age_group_label = ['0-4', '5-18', '19-64', '65+', 'All']
 # Init the setting of df
 df_setting = ['全台', '全台', 4]
 
-df_all_age = pd.read_csv(base_url+urllib.parse.quote(df_setting[0]+'/'+df_setting[1]+'.csv')).drop(['Unnamed: 0'], axis=1)
+df_all_age = pd.DataFrame()
+if local_data:
+    df_all_age = pd.read_csv(os.path.join(base_url, df_setting[0], df_setting[1]+'.csv'))
+else:
+    df_all_age = pd.read_csv(base_url+urllib.parse.quote(df_setting[0]+'/'+df_setting[1]+'.csv')).drop(['Unnamed: 0'], axis=1)
+
 df = df_all_age[df_all_age['Age'] == 4]
 
 classes = list(df.columns)
@@ -47,7 +59,12 @@ def update_df(country, town, age):
         df = df_all_age[df_all_age['Age'] == age]
         df_setting[2] = age
     else:
-        df_all_age = pd.read_csv(base_url+urllib.parse.quote(country+'/'+town+'.csv')).drop(['Unnamed: 0'], axis=1)
+        df_all_age = pd.DataFrame()
+        if local_data:
+            df_all_age = pd.read_csv(os.path.join(base_url, df_setting[0], df_setting[1]+'.csv'))
+        else:
+            df_all_age = pd.read_csv(base_url+urllib.parse.quote(df_setting[0]+'/'+df_setting[1]+'.csv')).drop(['Unnamed: 0'], axis=1)
+            
         df = df_all_age[df_all_age['Age'] == age]
         df_setting = [country, town, age]
 

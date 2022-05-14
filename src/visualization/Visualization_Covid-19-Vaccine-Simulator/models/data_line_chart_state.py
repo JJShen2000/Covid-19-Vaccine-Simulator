@@ -1,7 +1,15 @@
 import pandas as pd
 import os
+import sys
+
+local_data = False
+if '--local' in sys.argv:
+    local_data = True
 
 line_chart_by_state_data_url = 'https://raw.githubusercontent.com/JJShen2000/Visualization-Data_Covid-19-Vaccine-Simulator/main/data_line_chart_by_state/'
+
+if local_data:
+    line_chart_by_state_data_url = os.path.join("preprocessing", "data", "lc_state")
 
 # Set information about age group for dropdown
 age_group_id = range(5)
@@ -16,9 +24,13 @@ scenario_conf = {'basic':'原始病毒株(無NPI, 高疫苗施打量)',
                  'delta_low_vac':'Delta病毒株(無NPI, 低疫苗施打量)',
                  'delta_NPI':'Delta病毒株(有NPI, 高疫苗施打量)',
                  'delta_NPI_low_vac':'Delta病毒株(有NPI, 低疫苗施打量)'}
+if local_data:
+    scenario_conf = {'graph__test':'graph__test'}
 scenario_conf_keys = list(scenario_conf.keys())
 
 scenario_init_infectors = {'wanwua':'萬華爆發', 'xiaogun':'小港爆發'} # Data naming wrong: wanwua
+if local_data:
+    scenario_init_infectors = {'_tract_init_infectors': 'tract_init_infectors'}
 scenario_init_infectors_keys = list(scenario_init_infectors.keys())
 
 scenario_vaccine_strategies = {
@@ -31,6 +43,8 @@ scenario_vaccine_strategies = {
     'Taipei':'台北優先',
     'Kaohsiung':'高雄優先'
 } 
+if local_data:
+    scenario_vaccine_strategies = {'_test_strat__result': 'test_strat__result'}
 scenario_vaccine_strategies_keys = list(scenario_vaccine_strategies.keys())
 
 # Init the setting of scenario
@@ -38,6 +52,8 @@ sc_setting = [4, scenario_conf_keys[0], scenario_init_infectors_keys[0], scenari
 
 # Init df
 url = line_chart_by_state_data_url + '/' + '_'.join([sc_setting[1], sc_setting[2], sc_setting[3], 'state'])
+if local_data:
+    url = line_chart_by_state_data_url + '/' + '_'.join([sc_setting[1], sc_setting[2], sc_setting[3]])
 url = url + '/all.csv'
 df = pd.read_csv(url)
 
@@ -85,7 +101,10 @@ def update_df_by_age_scenario(age_group, sc_conf, sc_init_inf, sc_vac_strategy):
         sc_conf = sc_conf[:-8]
     
     if [age_group, sc_conf, sc_init_inf, sc_vac_strategy] != sc_setting:
-        url1 = line_chart_by_state_data_url + '/' + '_'.join([sc_conf, sc_init_inf, sc_vac_strategy, 'state'])
+        url1 = line_chart_by_state_data_url + '/' + '_'.join([sc_conf, sc_init_inf, sc_vac_strategy, "state"])
+        if local_data:
+            url1 = line_chart_by_state_data_url + '/' + '_'.join([sc_conf, sc_init_inf, sc_vac_strategy])
+
         age = str(age_group) if age_group < len(age_group_id)-1 else 'all'
         url1 = url1 + '/' + age + '.csv'
         df = pd.read_csv(url1)
