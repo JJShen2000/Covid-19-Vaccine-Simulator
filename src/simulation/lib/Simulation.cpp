@@ -337,7 +337,7 @@ void Simulation::simulate_unit(const Time::TimeStep& ts) {
     gettimeofday(&st, 0);
 #endif
 
-    if (ts.getDay() >= vacc_start_day && ts.getPeriod() == 0) {
+    if (ts.getDay() >= vacc_start_day && ts.getPeriod() == 0 && vacc_rollout != 0) {
         // update score
         cout << "calculate score\n";
         updateScore(ts);
