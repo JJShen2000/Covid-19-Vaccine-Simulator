@@ -126,12 +126,32 @@ void Simulation::loadInitInfector(std::istream& in) {
         for (auto v : chosen) {
             ndp[coll[loc][v]].stateID = 'I';
             I_pre.insert(coll[loc][v]);
+            // cout << "init " << coll[loc][v] << '\n';
         }
     }
 }
 
 void Simulation::simulate() {
     statisticInit();
+    // cout << "Ngp = " << N_gp << '\n';
+    // for (uint i = 0; i < N_gp; ++i) {
+    //     cout << "group " << i << '\n';
+    //     for (uint j = 0; j < cgpp[i].nds.size(); ++j) {
+    //         cout << cgpp[i].nds[j] << ' ';
+
+    //     }
+    //     cout << '\n';
+    // }
+    // cout << "N_nd = " << N_nd << '\n';
+    // for (uint i = 0; i < N_nd; ++i) {
+    //     cout << "node " << i << '\n';
+    //     for (uint j = 0; j < N_pr; ++j) {
+    //         for (uint k = 0; k < ndp[i].gp[j].size(); ++k) {
+    //             cout << ndp[i].gp[j][k].getID() << ' ';
+    //         }
+    //         cout << '\n';
+    //     }
+    // }
     BaseModel::simulate();
     statisticEnd();
 }
@@ -282,6 +302,7 @@ void Simulation::vaccination(Nodes& s2v, Nodes& v2w, const Time::TimeStep& ts) {
     for (uint i = 0; i < min(order.size(), vacc_rollout); ++i) {
         // cout << "i " << i << '\n';
         uint u = order[i].second;
+        // cout << u << ' ' << order[i].first << '\n';
         if (ndp[u].stateID == 'S') {
             s2v.push_back(u);
         }
@@ -295,8 +316,11 @@ void Simulation::vaccination(Nodes& s2v, Nodes& v2w, const Time::TimeStep& ts) {
 void Simulation::increaseScore(uint u, double tau, const Time::TimeStep& ts) {
     for (auto& tcgp : ndp[u].gp) {
         for (auto& cgp : tcgp) {
+            // cout << "contact group " << cgp.getID() << ' ' << cgp.size() << '\n';
             for (uint i = 0; i < cgp.size(); ++i) {
                 uint v = cgp.at(i);
+                
+                // cout << "add score " << v << '\n';
                 char st = ndp[v].stateID;
                 if (st == 'S' || (st == 'V' && ts.getDay() >= vacc_sec_start_day)) {
                     double p = infect_prob(u, v, cgp, tau, ts);

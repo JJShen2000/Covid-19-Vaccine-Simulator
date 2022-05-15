@@ -1,4 +1,5 @@
 #include "BaseModel.hpp"
+#include <iostream>
 
 void BaseModel::simulate() {
     for (auto& ts : tm) {
@@ -19,7 +20,7 @@ void BaseModel::loadGraph(std::istream& in) {
         in >> j;
         cgpp[i].setContactMatrix(ContactMatrix(&cmp[j]));
         cgpp[i].id = i;
-        cgpp[i].nds.resize(N_ag);
+        // cgpp[i].nds.resize(N_ag);
     }
 
     for (uint i = 0; i < N_cm; ++i) {
@@ -46,6 +47,7 @@ void BaseModel::loadGraph(std::istream& in) {
                 in >> gid;
                 cur.gp[j].push_back(ContactGroup(&cgpp[gid]));
                 cgpp[gid].nds.push_back(i);
+                // std::cout << "add node " << gid << ' ' << i << '\n';
                 cgpp[gid].period = j;
                 //cgpp[gid].nodes.push_back(Node(&cur));
             }
