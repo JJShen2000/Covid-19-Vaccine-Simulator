@@ -52,8 +52,8 @@ inline bool operator>(const Node& a, const Node& b) {
     return a.getID() > b.getID();
 }
 
-void Nodes::setState(char s) {
-    for (auto& v : *this) {
-        v.setState(s);
-    }
-}
+// void Nodes::setState(char s) {
+//     for (auto& v : *this) {
+//         v.setState(s);
+//     }
+// }
