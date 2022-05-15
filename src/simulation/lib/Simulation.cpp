@@ -380,9 +380,9 @@ void Simulation::simulate_unit(const Time::TimeStep& ts) {
     gettimeofday(&st, 0);
 #endif
     partitionGroupAge(I_sym.expire(), trans.k2d, sym_not_d, prob_death_sym);
-    partitionGroupAge(sym_not_d, trans.k2r, trans.k2f, prob_immune_sym);
+    partitionGroupAge(sym_not_d, trans.k2r, trans.k2f, prob_immune_sym_cond_nd);
 
-    partitionGroupAge(I_asym.expire(), trans.j2r, trans.j2f, prob_immune_sym_cond_nd);
+    partitionGroupAge(I_asym.expire(), trans.j2r, trans.j2f, prob_immune_asym);
 
     trans.e2i = E.expire();
 #ifdef TEST_TIME
