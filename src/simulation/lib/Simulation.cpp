@@ -139,13 +139,12 @@ void Simulation::simulate() {
 // vaccine ineffectiveness
 double Simulation::epsilon_bar(char state, uint time) {
     switch (state) {
-        case 'S':
-            return 1;
         case 'V':
             return epsilon_V1_bar[time >> 1];
         case 'W':
             return epsilon_V2_bar[time >> 1];
     }
+    // S or F
     return 1;
 }
 
@@ -178,6 +177,8 @@ void Simulation::infection(ExpiringState& ext, double tau, const Time::TimeStep&
                     for (auto idx : Random::choose(n, k)) {
                         // cout << "chosen " << k << " from " << n << '\n';
                         uint v = cgp.at(idx);
+                        char st = ndp[v].stateID;
+                        if (st != 'S' && st != 'V' && st != 'W' && st != 'F') continue;
                         // cout << "get time\n";
                         // uint dt = ts - ndp[v].ts;
                         // cout << "got time\n";
@@ -417,7 +418,7 @@ void Simulation::simulate_unit(const Time::TimeStep& ts) {
 
     for (auto v : trans.k2d) ndp[v].stateID = 'D';
     for (auto v : trans.k2r) ndp[v].stateID = 'R';
-    for (auto v : trans.k2r) ndp[v].stateID = 'F';
+    for (auto v : trans.k2f) ndp[v].stateID = 'F';
     for (auto v : trans.j2r) ndp[v].stateID = 'R';
     for (auto v : trans.j2f) ndp[v].stateID = 'F';
 
