@@ -101,6 +101,18 @@ void StatisticsAgedGeoStatePopulation::statisticInit() {
     rcnt.resize(N_lc, std::vector<uint>(N_ag));
     dcnt.resize(N_lc, std::vector<uint>(N_ag));
 
+    allnew.resize(N_lc, std::vector<uint>(N_ag));
+    snew.resize(N_lc, std::vector<uint>(N_ag));
+    vnew.resize(N_lc, std::vector<uint>(N_ag));
+    wnew.resize(N_lc, std::vector<uint>(N_ag));
+    enew.resize(N_lc, std::vector<uint>(N_ag));
+    inew.resize(N_lc, std::vector<uint>(N_ag));
+    jnew.resize(N_lc, std::vector<uint>(N_ag));
+    knew.resize(N_lc, std::vector<uint>(N_ag));
+    fnew.resize(N_lc, std::vector<uint>(N_ag));
+    rnew.resize(N_lc, std::vector<uint>(N_ag));
+    dnew.resize(N_lc, std::vector<uint>(N_ag));
+
     for (auto& v : ndp) {
         // ++cnts[0].cnt[v.loc][v.age];
         // if (v.stateID == 'I') {
@@ -130,20 +142,20 @@ void StatisticsAgedGeoStatePopulation::statisticUnit(const Time::TimeStep& ts, c
         writeLine(ts);
     }
     using std::cout;
-    if (trans.e2i.size()) { cout << "e2i: "; for (auto v : trans.e2i) cout << v << ' '; cout << '\n'; }
-    if (trans.f2e.size()) { cout << "f2e: "; for (auto v : trans.f2e) cout << v << ' '; cout << '\n'; }
-    if (trans.i2j.size()) { cout << "i2j: "; for (auto v : trans.i2j) cout << v << ' '; cout << '\n'; }
-    if (trans.i2k.size()) { cout << "i2k: "; for (auto v : trans.i2k) cout << v << ' '; cout << '\n'; }
-    if (trans.j2f.size()) { cout << "j2f: "; for (auto v : trans.j2f) cout << v << ' '; cout << '\n'; }
-    if (trans.j2r.size()) { cout << "j2r: "; for (auto v : trans.j2r) cout << v << ' '; cout << '\n'; }
-    if (trans.k2d.size()) { cout << "k2d: "; for (auto v : trans.k2d) cout << v << ' '; cout << '\n'; }
-    if (trans.k2f.size()) { cout << "k2f: "; for (auto v : trans.k2f) cout << v << ' '; cout << '\n'; }
-    if (trans.k2r.size()) { cout << "k2r: "; for (auto v : trans.k2r) cout << v << ' '; cout << '\n'; }
-    if (trans.s2e.size()) { cout << "s2e: "; for (auto v : trans.s2e) cout << v << ' '; cout << '\n'; }
-    if (trans.s2v.size()) { cout << "s2v: "; for (auto v : trans.s2v) cout << v << ' '; cout << '\n'; }
-    if (trans.v2e.size()) { cout << "v2e: "; for (auto v : trans.v2e) cout << v << ' '; cout << '\n'; }
-    if (trans.v2w.size()) { cout << "v2w: "; for (auto v : trans.v2w) cout << v << ' '; cout << '\n'; }
-    if (trans.w2e.size()) { cout << "w2e: "; for (auto v : trans.w2e) cout << v << ' '; cout << '\n'; }
+    // if (trans.e2i.size()) { cout << "e2i: "; for (auto v : trans.e2i) cout << v << ' '; cout << '\n'; }
+    // if (trans.f2e.size()) { cout << "f2e: "; for (auto v : trans.f2e) cout << v << ' '; cout << '\n'; }
+    // if (trans.i2j.size()) { cout << "i2j: "; for (auto v : trans.i2j) cout << v << ' '; cout << '\n'; }
+    // if (trans.i2k.size()) { cout << "i2k: "; for (auto v : trans.i2k) cout << v << ' '; cout << '\n'; }
+    // if (trans.j2f.size()) { cout << "j2f: "; for (auto v : trans.j2f) cout << v << ' '; cout << '\n'; }
+    // if (trans.j2r.size()) { cout << "j2r: "; for (auto v : trans.j2r) cout << v << ' '; cout << '\n'; }
+    // if (trans.k2d.size()) { cout << "k2d: "; for (auto v : trans.k2d) cout << v << ' '; cout << '\n'; }
+    // if (trans.k2f.size()) { cout << "k2f: "; for (auto v : trans.k2f) cout << v << ' '; cout << '\n'; }
+    // if (trans.k2r.size()) { cout << "k2r: "; for (auto v : trans.k2r) cout << v << ' '; cout << '\n'; }
+    // if (trans.s2e.size()) { cout << "s2e: "; for (auto v : trans.s2e) cout << v << ' '; cout << '\n'; }
+    // if (trans.s2v.size()) { cout << "s2v: "; for (auto v : trans.s2v) cout << v << ' '; cout << '\n'; }
+    // if (trans.v2e.size()) { cout << "v2e: "; for (auto v : trans.v2e) cout << v << ' '; cout << '\n'; }
+    // if (trans.v2w.size()) { cout << "v2w: "; for (auto v : trans.v2w) cout << v << ' '; cout << '\n'; }
+    // if (trans.w2e.size()) { cout << "w2e: "; for (auto v : trans.w2e) cout << v << ' '; cout << '\n'; }
 }
 
 void StatisticsAgedGeoStatePopulation::statisticEnd() {
@@ -151,56 +163,30 @@ void StatisticsAgedGeoStatePopulation::statisticEnd() {
     if (time_opt == TimeOpt::End) {
         writeLine(Time::TimeStep({0, 0}, nullptr));
     }
-    // if (time_opt == TimeOpt::Daily) {
-    //     cout << "daily\n";
-    // }
-    // else if (time_opt == TimeOpt::End) {
-    //     cout << "End\n";
-    // }
-    // else if (time_opt == TimeOpt::Periodic) {
-    //     cout << "period\n";
-    // }
-    // if (age_opt == AgeOpt::Each) {
-    //     cout << "Age Each\n";
-    // }
-    // else if (age_opt == AgeOpt::Sum) {
-    //     cout << "Age sum\n";
-    // }
-    // if (town_opt == TownOpt::Each) {
-    //     cout << "Town Each\n";
-    // }
-    // else if (town_opt == TownOpt::Sum) {
-    //     cout << "Town Sum\n";
-    // }
-    // // cout << state_cnt_opt << '\n';
-    // for (uint i = 0; i < (uint)StateCntOpt::NState; ++i) {
-    //     if (state_cnt_opt & (1 << i)) {
-    //         cout << column_name[i] << '\n';
-    //     }
-    // }
 }
 
 void StatisticsAgedGeoStatePopulation::update(const Transition& trans) {  
-    transition(trans.s2v, scnt, vcnt);
-    transition(trans.v2w, vcnt, wcnt);
-    transition(trans.s2e, scnt, ecnt);
-    transition(trans.v2e, vcnt, ecnt);
-    transition(trans.w2e, wcnt, ecnt);
-    transition(trans.f2e, fcnt, ecnt);
-    transition(trans.e2i, ecnt, icnt);
-    transition(trans.i2j, icnt, jcnt);
-    transition(trans.i2k, icnt, kcnt);
-    transition(trans.j2f, jcnt, fcnt);
-    transition(trans.j2r, jcnt, rcnt);
-    transition(trans.k2r, kcnt, rcnt);
-    transition(trans.k2d, kcnt, dcnt);
-    transition(trans.k2f, kcnt, fcnt);
+    transition(trans.s2v, scnt, vcnt, vnew);
+    transition(trans.v2w, vcnt, wcnt, wnew);
+    transition(trans.s2e, scnt, ecnt, enew);
+    transition(trans.v2e, vcnt, ecnt, enew);
+    transition(trans.w2e, wcnt, ecnt, enew);
+    transition(trans.f2e, fcnt, ecnt, enew);
+    transition(trans.e2i, ecnt, icnt, inew);
+    transition(trans.i2j, icnt, jcnt, jnew);
+    transition(trans.i2k, icnt, kcnt, knew);
+    transition(trans.j2f, jcnt, fcnt, fnew);
+    transition(trans.j2r, jcnt, rcnt, rnew);
+    transition(trans.k2r, kcnt, rcnt, rnew);
+    transition(trans.k2d, kcnt, dcnt, dnew);
+    transition(trans.k2f, kcnt, fcnt, fnew);
 }
 
-void StatisticsAgedGeoStatePopulation::transition(const Nodes& nodes, std::vector<std::vector<uint>>& src, std::vector<std::vector<uint>>& des) {
+void StatisticsAgedGeoStatePopulation::transition(const Nodes& nodes, std::vector<std::vector<uint>>& src, std::vector<std::vector<uint>>& des, std::vector<std::vector<uint>>& desnew) {
     for (auto v : nodes) {
         --src[ndp[v].loc][ndp[v].age];
         ++des[ndp[v].loc][ndp[v].age];
+        ++desnew[ndp[v].loc][ndp[v].age];
     }
 }
 
@@ -228,6 +214,11 @@ void StatisticsAgedGeoStatePopulation::writeHeader() {
             }
             adddot = 1;
             (*out) << column_name[i] << " Number";
+            if (adddot) {
+                (*out) << ",";
+            }
+            adddot = 1;
+            (*out) << " New Added " << column_name[i];
         }
     }
         
@@ -254,44 +245,52 @@ void StatisticsAgedGeoStatePopulation::writeLine(const Time::TimeStep& ts) {
             }
 
             bool adddot = 0;
-            if (state_cnt_opt & (1 << (uint)StateCntOpt::All)) writeTerm(town, age, adddot, allcnt);
-            if (state_cnt_opt & (1 << (uint)StateCntOpt::S)) writeTerm(town, age, adddot, scnt);
-            if (state_cnt_opt & (1 << (uint)StateCntOpt::V)) writeTerm(town, age, adddot, vcnt);
-            if (state_cnt_opt & (1 << (uint)StateCntOpt::W)) writeTerm(town, age, adddot, wcnt);
-            if (state_cnt_opt & (1 << (uint)StateCntOpt::E)) writeTerm(town, age, adddot, ecnt);
-            if (state_cnt_opt & (1 << (uint)StateCntOpt::I)) writeTerm(town, age, adddot, icnt);
-            if (state_cnt_opt & (1 << (uint)StateCntOpt::J)) writeTerm(town, age, adddot, jcnt);
-            if (state_cnt_opt & (1 << (uint)StateCntOpt::K)) writeTerm(town, age, adddot, kcnt);
-            if (state_cnt_opt & (1 << (uint)StateCntOpt::F)) writeTerm(town, age, adddot, fcnt);
-            if (state_cnt_opt & (1 << (uint)StateCntOpt::R)) writeTerm(town, age, adddot, rcnt);
-            if (state_cnt_opt & (1 << (uint)StateCntOpt::D)) writeTerm(town, age, adddot, dcnt);
+            if (state_cnt_opt & (1 << (uint)StateCntOpt::All)) writeTerm(town, age, adddot, allcnt, allnew);
+            if (state_cnt_opt & (1 << (uint)StateCntOpt::S)) writeTerm(town, age, adddot, scnt, snew);
+            if (state_cnt_opt & (1 << (uint)StateCntOpt::V)) writeTerm(town, age, adddot, vcnt, vnew);
+            if (state_cnt_opt & (1 << (uint)StateCntOpt::W)) writeTerm(town, age, adddot, wcnt, wnew);
+            if (state_cnt_opt & (1 << (uint)StateCntOpt::E)) writeTerm(town, age, adddot, ecnt, enew);
+            if (state_cnt_opt & (1 << (uint)StateCntOpt::I)) writeTerm(town, age, adddot, icnt, inew);
+            if (state_cnt_opt & (1 << (uint)StateCntOpt::J)) writeTerm(town, age, adddot, jcnt, jnew);
+            if (state_cnt_opt & (1 << (uint)StateCntOpt::K)) writeTerm(town, age, adddot, kcnt, knew);
+            if (state_cnt_opt & (1 << (uint)StateCntOpt::F)) writeTerm(town, age, adddot, fcnt, fnew);
+            if (state_cnt_opt & (1 << (uint)StateCntOpt::R)) writeTerm(town, age, adddot, rcnt, rnew);
+            if (state_cnt_opt & (1 << (uint)StateCntOpt::D)) writeTerm(town, age, adddot, dcnt, dnew);
             (*out) << '\n';
         }
     }
     // (*out) << '\n';
 }
 
-void StatisticsAgedGeoStatePopulation::writeTerm(uint town, uint age, bool& adddot, std::vector<std::vector<uint>>& cnt) {
-    uint sm = 0;
+void StatisticsAgedGeoStatePopulation::writeTerm(uint town, uint age, bool& adddot, std::vector<std::vector<uint>>& cnt, std::vector<std::vector<uint>>& nnew) {
+    uint smcnt = 0, smnew = 0;
     if (town_opt == TownOpt::Sum && age_opt == AgeOpt::Sum) {
         for (uint town = 0; town < N_lc; ++town) {
             for (uint age = 0; age < N_ag; ++age) {
-                sm += cnt[town][age];
+                smcnt += cnt[town][age];
+                smnew += nnew[town][age];
+                nnew[town][age] = 0;
             }
         }
     }
     else if (town_opt == TownOpt::Each && age_opt == AgeOpt::Sum) {
         for (uint age = 0; age < N_ag; ++age) {
-            sm += cnt[town][age];
+            smcnt += cnt[town][age];
+            smnew += nnew[town][age];
+            nnew[town][age] = 0;
         }
     }
     else if (age_opt == AgeOpt::Each) {
         for (uint town = 0; town < N_lc; ++town) {
-            sm += cnt[town][age];
+            smcnt += cnt[town][age];
+            smnew += nnew[town][age];
+            nnew[town][age] = 0;
         }
     }
     else {
-        sm = cnt[town][age];
+        smcnt = cnt[town][age];
+        smnew = nnew[town][age];
+        nnew[town][age] = 0;
     }
 
     if (adddot) {
@@ -299,5 +298,14 @@ void StatisticsAgedGeoStatePopulation::writeTerm(uint town, uint age, bool& addd
     }
     adddot = 1;
 
-    (*out) << sm;
+    (*out) << smcnt;
+
+    if (adddot) {
+        (*out) << ",";
+    }
+    adddot = 1;
+
+    (*out) << smnew;
+
+
 }

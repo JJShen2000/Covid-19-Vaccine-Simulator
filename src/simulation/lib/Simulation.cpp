@@ -3,7 +3,7 @@
 #include <map>
 #include <algorithm>
 #define min(x, y) (((x) < (y))? (x) : (y))
-// #define TEST_TIME
+#define TEST_TIME
 #ifdef TEST_TIME
 #include <sys/time.h>
 #endif
