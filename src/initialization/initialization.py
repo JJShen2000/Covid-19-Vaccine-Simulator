@@ -65,8 +65,10 @@ class graph_init:
 
         # Assigning contact groups at night
         for i, tract_group in enumerate(self.nodes):
-            print("Processing tract: {}/{}".format(i+1, self.num_tracts))
+            print("\rProcessing tract: {}/{}".format(i+1, self.num_tracts), end='')
             self._assign_night_group_in_each_tract(tract_group)
+        
+        print()
 
         # Worker flow (nodes in night → nodes in day)
         print("Applying worker flow")
@@ -74,11 +76,13 @@ class graph_init:
         workers_each_day_tract = [[] for _ in range(self.num_tracts)]
 
         for tract_idx, tract in enumerate(self.nodes):
-            print("{}/{}".format(tract_idx+1, self.num_tracts))
+            print("\r{}/{}".format(tract_idx+1, self.num_tracts), end='')
             weight_distribution = self.worker_flow[tract_idx]
             for worker in tract[2]:  # tract[2]: The people in age group2(age 19-65)
                 day_tract_idx = random.choices(list(range(self.num_tracts)), weights=weight_distribution, k=1)[0]
                 workers_each_day_tract[day_tract_idx].append(worker)
+        
+        print()
 
         for tract_idx in range(len(self.nodes)):
             self.nodes_day[tract_idx][2] = workers_each_day_tract[tract_idx]
@@ -86,8 +90,10 @@ class graph_init:
         # Assigning contact groups at day
         print("Assigning contact groups at day")
         for i, tract_group in enumerate(self.nodes_day):
-            print("Processing tract: {}/{}".format(i+1, self.num_tracts))
+            print("\rProcessing tract: {}/{}".format(i+1, self.num_tracts), end='')
             self._assign_day_group_in_each_tract(tract_group)
+
+        print()
 
 
     def _assign_night_group_in_each_tract(self, tract_group):
@@ -105,7 +111,9 @@ class graph_init:
         Returns:
             None
         '''
-        child1, child2, adult1, adult2 = tract_group
+        child1, child2 = tract_group[:2]
+        adult1 = [x for xs in tract_group[3:7] for x in xs] # itertools.chain()
+        adult2 = [x for xs in tract_group[7:] for x in xs] 
 
         '''Group households (index=0)'''
         people = child1 + child2 + adult1 + adult2
@@ -160,7 +168,8 @@ class graph_init:
         Returns:
             None
         '''
-        child1, child2, adult1, adult2 = tract_group
+        child1, child2 = tract_group[:2]
+        adult1 = [x for xs in tract_group[3:7] for x in xs] # itertools.chain()
 
         '''Group play groups (index=2)'''
         self.__assign_by_group_type(child1, 4, 2)

@@ -16,14 +16,36 @@ def get_n(df_age_population):
     """
     return df_age_population[3].sum()
 
-def get_contact_group_probabilities(df_age_population, df_contact_prob, df_census_tracts):
+
+def get_a(path):
+    """ Return number of age groups
+    """
+    a = 0
+    with open(path) as f:
+        while True:
+            line = f.readline()
+            if line.split()[0] == 'prob_transmission':
+                a = len(line.split())-1
+                break
+    
+    return a
+
+
+def get_contact_group_probabilities(a, df_age_population, df_contact_prob, df_census_tracts):
     contact_group_list = df_contact_prob['Contact group'].unique()
     m = len(contact_group_list)
-    contact_group_list
 
-    age_group = df_contact_prob[df_contact_prob.iloc[:, 2].str.contains(' ')].iloc[:, 2].unique()
-    a = len(age_group)
-    age_group_prefix = set([g.split()[0] for g in list(age_group)])
+    age_group_raw = df_contact_prob[df_contact_prob.iloc[:, 2].str.contains(' ')].iloc[:, 2].unique()
+    # age_group: ['Child 0-4' 'Child 5-18' 'Adult 19-64' 'Adult 65+']
+    nums_age_group = [1, 1, 5, 3] # 0~10(1), 11~20(1), 21~70(5), 71~100(3)
+    
+    age_group = []
+    for i, n in enumerate(nums_age_group):
+        age_group += [age_group_raw[i]]*n
+    # ['Child 0-4', 'Child 5-18', 'Adult 19-64', 'Adult 19-64', 'Adult 19-64', 'Adult 19-64', 'Adult 19-64', 'Adult 65+', 'Adult 65+', 'Adult 65+']
+   
+    age_group_prefix = set([g.split()[0] for g in list(age_group)]) 
+
     # age_group
     dict_age_group_prefix = {}
     for prefix in age_group_prefix:
@@ -69,7 +91,17 @@ def get_contact_group_probabilities(df_age_population, df_contact_prob, df_censu
                     contact_prob_dict[(i, j)] = df_row[3]                     
 
         contact_group_probabilities.append(contact_prob_dict)
-    return a, m, contact_group_probabilities
+    return m, contact_group_probabilities
+
+
+def get_seperate_ages(a):
+    """ Get seperate_ages(parameter of get_age_population)
+    """
+
+    seperate_ages = []
+    for i in range(int(100/a)-1):
+        seperate_ages.append(int(100/a)*(i+1)+1)
+    return seperate_ages
 
 
 def get_age_population(df_census_tracts, df_age_population, seperate_ages=[5, 19, 65]):
@@ -106,9 +138,9 @@ def get_age_population(df_census_tracts, df_age_population, seperate_ages=[5, 19
     return age_population
 
 
-def get_worker_flow(df_age_population, df_city_to_city_commute, df_city, df_town):
+def get_worker_flow(df_age_population, df_city_to_city_commute, df_city, df_town, work_age = [21, 70]):
     global worker_population_by_town
-    worker_population_by_town = df_age_population[(df_age_population[2]>=19) & (df_age_population[2]<65)].drop([2], axis=1).groupby([0, 1], sort=False).sum()
+    worker_population_by_town = df_age_population[(df_age_population[2]>=21) & (df_age_population[2]<=70)].drop([2], axis=1).groupby([0, 1], sort=False).sum()
     worker_population_by_city = worker_population_by_town.groupby([0], sort=False).sum()
     orther_area_worker_population = worker_population_by_city.iloc[-2] + worker_population_by_city.iloc[-1]
     int(orther_area_worker_population)
@@ -204,9 +236,12 @@ def load_data(dataPath=None):
     df_city_to_city_commute = pd.read_csv(os.path.join(dataPath, 'city_to_city_commute.csv'))
     df_city = pd.read_csv(os.path.join(dataPath, 'city.csv'), header=None)
 
+    a = get_a(os.path.join('..', '..', 'input', 'covid_param', 'test.conf'))
     n = get_n(df_age_population) 
-    a, m, contact_group_probabilities = get_contact_group_probabilities(df_age_population, df_contact_prob, df_census_tracts)
-    age_population = get_age_population(df_census_tracts, df_age_population)
+    
+    m, contact_group_probabilities = get_contact_group_probabilities(a, df_age_population, df_contact_prob, df_census_tracts)
+    seperate_ages = get_seperate_ages(a)
+    age_population = get_age_population(df_census_tracts, df_age_population, seperate_ages)
     worker_flow = get_worker_flow(df_age_population, df_city_to_city_commute, df_city, df_census_tracts)
     
     return n, m, a, contact_group_probabilities, age_population, worker_flow
