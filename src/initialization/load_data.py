@@ -225,7 +225,7 @@ def load_data(dataPath=None):
         m (int): number of group class
         a (int): number of age group
         contact_group_probabilities (a list of dictionaries)
-        age_population(list of lists)
+        age_population(list of lists) dim: num_tracts X num_age_groups
         worker_flow(list of lists) from town to town
     """
     if dataPath is None:
@@ -243,7 +243,7 @@ def load_data(dataPath=None):
     seperate_ages = get_seperate_ages(a)
     age_population = get_age_population(df_census_tracts, df_age_population, seperate_ages)
     worker_flow = get_worker_flow(df_age_population, df_city_to_city_commute, df_city, df_census_tracts)
-    
+
     return n, m, a, contact_group_probabilities, age_population, worker_flow
 
 

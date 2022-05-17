@@ -112,7 +112,7 @@ class graph_init:
             None
         '''
         child1, child2 = tract_group[:2]
-        adult1 = [x for xs in tract_group[3:7] for x in xs] # itertools.chain()
+        adult1 = [x for xs in tract_group[2:7] for x in xs] # itertools.chain()
         adult2 = [x for xs in tract_group[7:] for x in xs] 
 
         '''Group households (index=0)'''
@@ -164,12 +164,12 @@ class graph_init:
             age 19-64: work groups
 
         Args: 
-            tract_group: A list of 4 lists(Each list represents a different age group). 
+            tract_group: A list of [a] lists(Each list represents a different age group). 
         Returns:
             None
         '''
         child1, child2 = tract_group[:2]
-        adult1 = [x for xs in tract_group[3:7] for x in xs] # itertools.chain()
+        adult1 = [x for xs in tract_group[2:7] for x in xs] # itertools.chain()
 
         '''Group play groups (index=2)'''
         self.__assign_by_group_type(child1, 4, 2)
@@ -254,6 +254,7 @@ class graph_init:
                     line += '\n'
             f.write(line)
 
+
             for tract_group in self.nodes:
                 for j, age_group in enumerate(tract_group):
                     for p in age_group:
@@ -262,7 +263,7 @@ class graph_init:
                             line += f'2 {self.node_group_attr[p, 2]} {self.node_group_attr[p, 3]} \n'
                         elif j == 1:
                             line += f'3 {self.node_group_attr[p, 4]} {self.node_group_attr[p, 5]} {self.node_group_attr[p, 6]} \n'
-                        elif j == 2:
+                        elif j >= 2 and j < 7:
                             line += f'1 {self.node_group_attr[p, 7]} \n'
                         else:
                             line += f'2 {self.node_group_attr[p, 8]} {self.node_group_attr[p, 9]} \n'
