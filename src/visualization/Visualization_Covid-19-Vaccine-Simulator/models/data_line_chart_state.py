@@ -25,7 +25,8 @@ scenario_conf = {'basic':'原始病毒株(無NPI, 高疫苗施打量)',
                  'delta_NPI':'Delta病毒株(有NPI, 高疫苗施打量)',
                  'delta_NPI_low_vac':'Delta病毒株(有NPI, 低疫苗施打量)'}
 if local_data:
-    scenario_conf = {'graph__test':'graph__test'}
+    scenario_conf = {'graph__0immune':'graph__0immune', 
+                     'graph__1immune': 'graph__1immune'}
 scenario_conf_keys = list(scenario_conf.keys())
 
 scenario_init_infectors = {'wanwua':'萬華爆發', 'xiaogun':'小港爆發'} # Data naming wrong: wanwua
