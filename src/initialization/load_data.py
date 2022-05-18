@@ -31,7 +31,7 @@ def get_a(path):
     return a
 
 
-def get_contact_group_probabilities(a, df_age_population, df_contact_prob, df_census_tracts):
+def get_contact_group_probabilities(a, df_contact_prob):
     contact_group_list = df_contact_prob['Contact group'].unique()
     m = len(contact_group_list)
 
@@ -51,7 +51,7 @@ def get_contact_group_probabilities(a, df_age_population, df_contact_prob, df_ce
     for prefix in age_group_prefix:
         dict_age_group_prefix[prefix] = [] 
 
-    dict_age_group_prefix = {'Anyone': []}
+    dict_age_group_prefix['Anyone'] = []
     age_group_to_number = {}
     for i, g in enumerate(age_group):
         prefix = g.split()[0]
@@ -60,7 +60,11 @@ def get_contact_group_probabilities(a, df_age_population, df_contact_prob, df_ce
         else:
             dict_age_group_prefix[prefix] = [g]
         dict_age_group_prefix['Anyone'].append(g)
-        age_group_to_number[g] = i
+
+        if g in age_group_to_number:
+          age_group_to_number[g].append(i)
+        else:
+          age_group_to_number[g] = [i]
 
     contact_group_probabilities = []
     for contact_group in contact_group_list:
@@ -72,35 +76,34 @@ def get_contact_group_probabilities(a, df_age_population, df_contact_prob, df_ce
         for _, df_row in df_contact_group.iterrows():
             if len(df_row[1].split()) == 1:
                 for age_i in dict_age_group_prefix[df_row[1]]:
-                    i = age_group_to_number[age_i]
-                    if len(df_row[2].split()) == 1:
-                        for age_j in dict_age_group_prefix[df_row[2]]:
-                            j = age_group_to_number[age_j]
+                    for i in age_group_to_number[age_i]:
+                      if len(df_row[2].split()) == 1:
+                          for age_j in dict_age_group_prefix[df_row[2]]:
+                              for j in age_group_to_number[age_j]:
+                                contact_prob_dict[(i, j)] = df_row[3]
+                      else:
+                          for j in age_group_to_number[df_row[2]]:
                             contact_prob_dict[(i, j)] = df_row[3]
-                    else:
-                        j = age_group_to_number[df_row[2]]
-                        contact_prob_dict[(i, j)] = df_row[3]
             else:
-                i = age_group_to_number[df_row[1]]
-                if len(df_row[2].split()) == 1:
-                    for age_j in dict_age_group_prefix[df_row[2]]:
-                        j = age_group_to_number[age_j]
-                        contact_prob_dict[(i, j)] = df_row[3]
-                else:
-                    j = age_group_to_number[df_row[2]]
-                    contact_prob_dict[(i, j)] = df_row[3]                     
+                for i in age_group_to_number[df_row[1]]:
+                  if len(df_row[2].split()) == 1:
+                      for age_j in dict_age_group_prefix[df_row[2]]:
+                          for j in age_group_to_number[age_j]:
+                            contact_prob_dict[(i, j)] = df_row[3]
+                  else:
+                      for j in age_group_to_number[df_row[2]]:
+                        contact_prob_dict[(i, j)] = df_row[3]                     
 
         contact_group_probabilities.append(contact_prob_dict)
-    return m, contact_group_probabilities
+    return m, contact_group_probabilities 
 
 
 def get_seperate_ages(a):
-    """ Get seperate_ages(parameter of get_age_population)
+    """ Get seperate_ages(parameter of get_age_population)  (]
     """
-
     seperate_ages = []
-    for i in range(int(100/a)-1):
-        seperate_ages.append(int(100/a)*(i+1)+1)
+    for i in range(int(100//a)-1):
+        seperate_ages.append(int(100//a)*(i+1)+1)
     return seperate_ages
 
 
@@ -239,8 +242,10 @@ def load_data(dataPath=None):
     a = get_a(os.path.join('..', '..', 'input', 'covid_param', 'test.conf'))
     n = get_n(df_age_population) 
     
-    m, contact_group_probabilities = get_contact_group_probabilities(a, df_age_population, df_contact_prob, df_census_tracts)
+    m, contact_group_probabilities = get_contact_group_probabilities(a, df_contact_prob)
+
     seperate_ages = get_seperate_ages(a)
+ 
     age_population = get_age_population(df_census_tracts, df_age_population, seperate_ages)
     worker_flow = get_worker_flow(df_age_population, df_city_to_city_commute, df_city, df_census_tracts)
 
