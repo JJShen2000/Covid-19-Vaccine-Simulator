@@ -38,13 +38,13 @@ protected:
 
     void update(const Transition& trans);
 
-    void transition(const Nodes& nodes, std::vector<std::vector<uint>>& src, std::vector<std::vector<uint>>& des);
+    void transition(const Nodes& nodes, std::vector<std::vector<uint>>& src, std::vector<std::vector<uint>>& des, std::vector<std::vector<uint>>& desnew);
 
     void writeHeader();
 
     void writeLine(const Time::TimeStep& ts);
 
-    void writeTerm(uint town, uint age, bool& adddot, std::vector<std::vector<uint>>& cnt);
+    void writeTerm(uint town, uint age, bool& adddot, std::vector<std::vector<uint>>& cnt, std::vector<std::vector<uint>>& nnew);
 
     std::vector<std::string> column_name  = {
         "All", 
@@ -68,6 +68,7 @@ protected:
     std::ostream* out;
 
     std::vector<std::vector<uint>> allcnt, scnt, vcnt, wcnt, ecnt, icnt, jcnt, kcnt, fcnt, rcnt, dcnt;
+    std::vector<std::vector<uint>> allnew, snew, vnew, wnew, enew, inew, jnew, knew, fnew, rnew, dnew;
 };  
 
 #endif
