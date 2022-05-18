@@ -219,7 +219,7 @@ def get_worker_flow(df_age_population, df_city_to_city_commute, df_city, df_town
 
 
 
-def load_data(dataPath=None):
+def load_data(dataPath=None, scale=1):
     """Load data
     Returns:
         n, m, a, contact_group_probabilities, age_population, worker_flow
@@ -249,6 +249,13 @@ def load_data(dataPath=None):
     age_population = get_age_population(df_census_tracts, df_age_population, seperate_ages)
     worker_flow = get_worker_flow(df_age_population, df_city_to_city_commute, df_city, df_census_tracts)
 
+    if scale != 1:
+        n = 0
+        for i in range(len(age_population)):
+            for j in range(len(age_population[0])):
+                age_population[i][j] = int(age_population[i][j] * scale)
+                n += age_population[i][j]
+    
     return n, m, a, contact_group_probabilities, age_population, worker_flow
 
 
