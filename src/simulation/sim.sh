@@ -1,8 +1,6 @@
 #!/bin/bash
 
-no_aon=0
-no_leaky=0
-
+sim_rounds=100
 simulator="./simulator"
 
 data_dir="../../data/sim_data/"
@@ -12,6 +10,16 @@ init_infector_dir="${data_dir}init_infectors/*"
 vaccine_dir="${data_dir}vaccine_strat/*"
 
 dump_dir="../../data/vis_data/"
+
+preprocess()
+{
+	if ! [[ $1 =~ ^[0-9]+$ ]]; then
+		echo $1 "ERROR: Invalid parameter"
+		exit 1
+	else
+		sim_rounds=$1
+	fi
+}
 
 makef()
 {
@@ -35,14 +43,21 @@ run()
 					ct="$(echo "$conf" | awk -F / '{print $NF}' | sed 's/.txt//; s/.conf//; s/.csv//')"
 					it="$(echo "$init_infectors" | awk -F / '{print $NF}' | sed 's/.txt//; s/.conf//; s/.csv//')"
 					vt="$(echo "$vaccine" | awk -F / '{print $NF}' | sed 's/.txt//; s/.conf//; s/.csv//')"
-					rs="$(echo "${dump_dir}${gt}__${ct}__${it}__${vt}__result.csv")"
+					dd="$(echo "${dump_dir}${ct}_${it}_${vt}")"
 
-					#echo "simulating: " $gt $ct $it $vt
-					echo "simulating: " $graph $conf $init_infectors $vaccine
-					#echo "dest file: " $rs
+					#echo "simulating: " $graph $conf $init_infectors $vaccine
+					echo "simulating: " $gt $ct $it $vt
 
-					./${simulator} -g $graph -p $conf -i $init_infectors -v $vaccine -o $rs -s DESSIR
-					wait
+					for i in $(seq 1 $sim_rounds); do
+						rs="$(echo "${dd}/result_${i}.csv")"
+
+						if [ $i -eq 1 ]; then 
+							mkdir $dd
+						fi
+
+						./${simulator} -g $graph -p $conf -i $init_infectors -v $vaccine -o $rs -s DSSASVWEIJKFRD
+						wait
+					done
 				done
 			done
 		done
@@ -51,10 +66,10 @@ run()
 
 main()
 {
+	preprocess $@
+
 	makef
-
 	run
-
 	makec
 }
 

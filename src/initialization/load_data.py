@@ -219,7 +219,7 @@ def get_worker_flow(df_age_population, df_city_to_city_commute, df_city, df_town
 
 
 
-def load_data(dataPath=None, scale=1):
+def load_data(dataPath=None, scale=0.01):
     """Load data
     Returns:
         n, m, a, contact_group_probabilities, age_population, worker_flow
@@ -239,7 +239,7 @@ def load_data(dataPath=None, scale=1):
     df_city_to_city_commute = pd.read_csv(os.path.join(dataPath, 'city_to_city_commute.csv'))
     df_city = pd.read_csv(os.path.join(dataPath, 'city.csv'), header=None)
 
-    a = get_a(os.path.join('..', '..', 'input', 'covid_param', 'test.conf'))
+    a = get_a(os.path.join('..', '..', 'input', 'covid_param', 'basic.conf'))
     n = get_n(df_age_population) 
     
     m, contact_group_probabilities = get_contact_group_probabilities(a, df_contact_prob)
