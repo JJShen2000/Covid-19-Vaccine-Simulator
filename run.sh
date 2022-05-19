@@ -15,7 +15,7 @@ preprocess()
                 exit 0
                 ;;
             "-d")
-                vis
+                vis ${@: -1}
                 exit 0
                 ;;
             *)
@@ -45,7 +45,7 @@ init()
     echo "Running Initialization..."
 
     cd src/initialization/
-    source init.sh
+    source init.sh 
     cd ../..
 
     wait
@@ -66,7 +66,7 @@ vis()
     echo "Running Visualization..."
 
     cd src/visualization
-    python3 draw_state.py
+    python3 draw_state.py $1
     cd ../..
 
     wait

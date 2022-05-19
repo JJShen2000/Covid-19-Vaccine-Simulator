@@ -1,16 +1,19 @@
 import matplotlib.pyplot as plt
+import sys
 import numpy as np
 import os
 from pandas import *
 import csv
 
 vis_dir = '../../data/vis_data/'
+state_map = {'E': 'New_Added_Exposed', 'D': 'Dead_Number'}
 
-def draw(dn, n):
+def draw(dn, n, states):
+#    plt.figure(n,figsize=(19,10))
     plt.figure(n)
     plt.xlabel("Day")
     plt.ylabel("Number")
-    title = dn.replace(vis_dir, '').replace('/', '').replace('.', '').replace('_', ' ')
+    title = dn.replace(vis_dir, '').replace('/', '').replace('.', '')
     plt.title(title)
 
     lw = 3.5
@@ -31,33 +34,39 @@ def draw(dn, n):
             for h in hd:
                 yd[h] = np.array([0 for i in range(180)])
         exposed += np.array(data["Exposed_Number"]).sum()
-        #if np.array(data["Exposed_Number"]).sum() < 100000:
-        #    continue
         filenum += 1
         for h in hd:
             yd[h] += np.array(data[h])
-
-    xd = np.array([i for i in range(1, 181)])
-    for h in hd:
-        #if h != "New_Added_Exposed":
-        if h != "Dead_Number":
-            continue
-        yd[h] = yd[h] / filenum
-        plt.plot(xd, yd[h], label=h, linewidth=lw)
     
-    print(title+":", yd["New_Added_Exposed"].sum(), yd["Dead_Number"].max())
+    for h in hd:
+        yd[h] = yd[h] / filenum
+    
+    xd = np.array([i for i in range(1, 181)])
+    for s in states:
+        if s in state_map.keys():
+            h = state_map[s]
+            plt.plot(xd, yd[h], label=h, linewidth=lw)
+
+    print(title+":", yd["New_Added_Exposed"].sum() / filenum, yd["Dead_Number"].max())
 
     legend = []
     lg = plt.legend(loc=0, prop={'size': 12})
     for l in lg.get_lines():
         l.set_linewidth(lw)
 
+#    plt.savefig(title+".jpg")
+
+if len(sys.argv) > 1 and sys.argv[1] != '-d':
+    draw_states = sys.argv[1]
+else:
+    draw_states = "ED"
+
 np.set_printoptions(suppress=True)
 if os.path.isdir(vis_dir):
     cnt = 1
     for d in os.listdir(vis_dir):
         pd = vis_dir+d+'/'
-        draw(pd, cnt)
+        draw(pd, cnt, draw_states)
         cnt += 1
 
 plt.show()
