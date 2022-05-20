@@ -4,8 +4,8 @@ This is Covid-19 Vaccine Simulator!
 ## Usage
 
 ```
-./run [-cCd]
-./run [num_of_sim_rounds]
+./run.sh [-cCd]
+./run.sh [num_of_sim_rounds]
 ```
 
 - -c 

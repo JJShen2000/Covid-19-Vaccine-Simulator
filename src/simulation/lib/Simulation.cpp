@@ -4,6 +4,7 @@
 #include <algorithm>
 #define min(x, y) (((x) < (y))? (x) : (y))
 //#define TEST_TIME
+//#define LOG
 #ifdef TEST_TIME
 #include <sys/time.h>
 #endif
@@ -355,7 +356,9 @@ void Simulation::updateScore(const Time::TimeStep& ts) {
 }
 
 void Simulation::simulate_unit(const Time::TimeStep& ts) {
+#ifdef LOG
     cout << "------- " << ts.getDay() << ' ' << ts.getPeriod() << "-------" << '\n';
+#endif
     Transition trans;
 #ifdef TEST_TIME
     timeval st, ed;
@@ -364,11 +367,15 @@ void Simulation::simulate_unit(const Time::TimeStep& ts) {
 
     if (ts.getDay() >= vacc_start_day && ts.getPeriod() == 0 && vacc_rollout != 0) {
         // update score
+#ifdef LOG
         cout << "calculate score\n";
+#endif
         updateScore(ts);
 
         // vaccination
+#ifdef LOG
         cout << "vaccination\n";
+#endif
 #ifdef TEST_TIME
         gettimeofday(&st, 0);
 #endif
@@ -389,7 +396,9 @@ void Simulation::simulate_unit(const Time::TimeStep& ts) {
     }
 
     // extract
+#ifdef LOG
     cout << "infect\n";
+#endif
     infection(I_pre, tau_I_pre, ts, trans.s2e, trans.v2e, trans.w2e, trans.f2e);
     infection(I_asym, tau_I_asym, ts, trans.s2e, trans.v2e, trans.w2e, trans.f2e);
     infection(I_sym, tau_I_sym, ts, trans.s2e, trans.v2e, trans.w2e, trans.f2e);
@@ -400,7 +409,9 @@ void Simulation::simulate_unit(const Time::TimeStep& ts) {
     partitionGroup(I_pre.expire(), trans.i2j, trans.i2k, sigma_asym);
 
     Nodes sym_not_d;
+#ifdef TEST_TIME
     cout << "expire\n";
+#endif
 #ifdef TEST_TIME
     gettimeofday(&st, 0);
 #endif
@@ -417,7 +428,9 @@ void Simulation::simulate_unit(const Time::TimeStep& ts) {
         
     
     // insert
+#ifdef TEST_TIME
     cout << "update state\n";
+#endif
 #ifdef TEST_TIME
     gettimeofday(&st, 0);
 #endif

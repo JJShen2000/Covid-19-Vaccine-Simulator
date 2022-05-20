@@ -9,7 +9,7 @@ using namespace std;
 
 int main(int argc, char* argv[]) {
     // cout << argc << '\n';
-    cout << "init\n";
+   // cout << "init\n";
     stringstream ss;
     for (int i = 1; i < argc; ++i) {
         ss << argv[i];
@@ -100,7 +100,8 @@ int main(int argc, char* argv[]) {
     // cout << "setting\n";
     model.setOutputSetting(setting);
 
-    cout << "start!\n";
+    //cout << "start!\n";
+    //cout << "start!\n";
     model.simulate();
 
 

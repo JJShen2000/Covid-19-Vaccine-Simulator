@@ -133,7 +133,7 @@ void StatisticsAgedGeoStatePopulation::statisticInit() {
 }
 
 void StatisticsAgedGeoStatePopulation::statisticUnit(const Time::TimeStep& ts, const Transition& trans) {
-    cout << "statistic\n";
+    ////cout << "statistic\n";
     update(trans);
     if (time_opt == TimeOpt::Periodic) {
         writeLine(ts);
