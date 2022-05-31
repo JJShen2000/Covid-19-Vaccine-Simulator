@@ -68,7 +68,6 @@ run()
                         msg3=$(printf "%-25s %25s\n" "Vaccination strategy" "${vt}")
                         msg4=$(printf "%-25s %25s\n" "Rounds" "${i}")
 
-                        ./${simulator} -g $graph -p $conf -i $init_infectors -v $vaccine -o $rs -s DSSASVWEIJKFRD
                         wait
                         echo XXX
                         echo $pc
@@ -77,6 +76,7 @@ run()
                         echo "$msg3"
                         echo "$msg4"
                         echo XXX
+                        ./${simulator} -g $graph -p $conf -i $init_infectors -v $vaccine -o $rs -s DSSASVWEIJKFRD >> time.log
                     done
                 done
             done
