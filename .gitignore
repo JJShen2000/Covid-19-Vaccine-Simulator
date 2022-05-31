@@ -242,7 +242,4 @@ dkms.conf
 
 # other 
 data/*
-
-simulation
-
-src/visualization/Visualization_Covid-19-Vaccine-Simulator/preprocessing/data/*
+*.log

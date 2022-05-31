@@ -15,5 +15,5 @@ build/%.o: lib/%.cpp
 
 .PHONY: clean
 clean: 
-	rm -f $(TARGETS) $(OBJ)
+	rm -f $(TARGETS) $(OBJ) *.log
 	rm -rf build
