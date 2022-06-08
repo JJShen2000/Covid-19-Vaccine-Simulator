@@ -7,11 +7,55 @@
 #include "ExpiringState.hpp"
 #include "BaseModel.hpp"
 #include "Heap.hpp"
+
 #include <omp.h>
 
+class BaseVaccStrat;
 
 class Simulation : public BaseModel {
 public:
+
+    using Nodes = std::vector<uint>;
+    using Dictionary = std::unordered_map<std::string, std::vector<double>>;
+
+    class BaseVaccStrat {
+    public:
+        virtual void init(const Simulation& sim, Dictionary& mp);
+        virtual void vaccinate(const Simulation& sim, const Time::TimeStep& ts, Nodes& s2v, Nodes& v2w) = 0;
+    protected:
+        uint vacc_rollout;
+        uint vacc_start_day;
+        uint vacc_sec_start_day;
+    };
+
+    class VaccStratInfectnessBase : public BaseVaccStrat {
+    public:
+        virtual void init(const Simulation& sim, Dictionary& mp) override;
+        virtual void vaccinate(const Simulation& sim, const Time::TimeStep& ts, Nodes& s2v, Nodes& v2w) override;
+    protected:
+        virtual void updateScore(const Simulation& sim, const Time::TimeStep& ts) = 0;
+        void increaseScore(uint u, double tau, const Simulation& sim, const Time::TimeStep& ts);
+        double infect_prob(uint u, uint v, const ContactGroup& cgp, double tau, const Time::TimeStep& ts, const Simulation& sim);
+        double epsilon_bar(char state, uint time, const Simulation& sim);
+        
+        std::vector<double> score;
+    };
+
+    class VaccStratInfectiousness : public VaccStratInfectnessBase {
+    public:
+        virtual void updateScore(const Simulation& sim, const Time::TimeStep& ts) override;
+    };
+
+    class VaccStratInfectiousnessSym : public VaccStratInfectnessBase {
+    public:
+        virtual void updateScore(const Simulation& sim, const Time::TimeStep& ts) override;
+    };
+
+    class VaccStratFactory {
+    public:
+        static Simulation::BaseVaccStrat* read(istream& in);
+    };
+
     void loadGraph(std::istream& in);
 
     void loadParam(std::istream& in);
@@ -21,9 +65,9 @@ public:
     void loadInitInfector(std::istream& in);
 
     void simulate();
-protected:
 
-    using Nodes = std::vector<uint>;
+    friend class VaccStratInfectnessBase;
+protected:
 
     struct Transition {
         Nodes s2v, v2w;
@@ -41,12 +85,8 @@ protected:
 
     void partitionGroupAge(const Nodes& vorg, Nodes& v1, Nodes& v2, const std::vector<double>& p1);
 
-    void vaccination(Nodes& s2v, Nodes& v2w, const Time::TimeStep& ts);
 
     void simulate_unit(const Time::TimeStep& ts);
-
-    void updateScore(const Time::TimeStep& ts);
-    void increaseScore(uint u, double tau, const Time::TimeStep& ts);
     double infect_prob(uint u, uint v, const ContactGroup& cgp, double tau, const Time::TimeStep& ts);
 
     // statistic method
@@ -70,9 +110,7 @@ protected:
     std::vector<double> epsilon_V1_bar;
     std::vector<double> epsilon_V2_bar;
     // priority queue to determine who to vaccinate
-    heap<double, uint> vacc_queue;
-    // vaccination rollout
-    uint vacc_rollout;
+    // heap<double, uint> vacc_queue;
 
     // transmission rate
     std::vector<double> prob_trans;
@@ -85,13 +123,9 @@ protected:
     std::vector<double> prob_immune_sym;
     std::vector<double> prob_immune_sym_cond_nd;
 
-    // vaccination order
-    std::vector<double> score;
+    BaseVaccStrat* vacc_strat;
 
-    // vaccination start day
-    uint vacc_start_day;
-    // second dose start day
-    uint vacc_sec_start_day;
+    uint infect_start_day;
 };
 
 #endif
