@@ -41,7 +41,10 @@ run()
     icnt=$(ls ${init_infector_dir} | wc -l)
     vcnt=$(ls ${vaccine_dir} | wc -l)
     ttcnt=$((gcnt*ccnt*icnt*vcnt*sim_rounds))
+    
     x=0
+    start_time=$(date +%s.%3N)
+
     {
     for graph in ${graph_dir}; do
         for conf in ${conf_dir}; do
@@ -63,10 +66,14 @@ run()
                             mkdir $dd
                         fi
                         
+                        end_time=$(date +%s.%3N)
+                        elapsed=$(echo "scale=3; $end_time - $start_time" | bc)
+
                         msg1=$(printf "%-25s %25s\n" "Configurations" "${ct}")
                         msg2=$(printf "%-25s %25s\n" "Initial infectors" "${it}")
                         msg3=$(printf "%-25s %25s\n" "Vaccination strategy" "${vt}")
                         msg4=$(printf "%-25s %25s\n" "Rounds" "${i}")
+                        msg5=$(printf "%-25s %25s\n" "Time Elapsed (seconds)" "${elapsed}")
 
                         wait
                         echo XXX
@@ -75,6 +82,8 @@ run()
                         echo "$msg2"
                         echo "$msg3"
                         echo "$msg4"
+                        echo "$msg5"
+
                         echo XXX
                         ./${simulator} -g $graph -p $conf -i $init_infectors -v $vaccine -o $rs -s DSSASVWEIJKFRD >> time.log
                     done

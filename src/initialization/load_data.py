@@ -219,7 +219,7 @@ def get_worker_flow(df_age_population, df_city_to_city_commute, df_city, df_town
 
 
 
-def load_data(dataPath=None, scale=0.01):
+def load_data(dataPath=None, scale=1):
     """Load data
     Returns:
         n, m, a, contact_group_probabilities, age_population, worker_flow

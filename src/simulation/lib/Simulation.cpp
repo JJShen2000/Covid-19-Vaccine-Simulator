@@ -1,15 +1,17 @@
 #include "Simulation.hpp"
+#include "sort.hpp"
 #include <math.h>
 #include <map>
 #include <algorithm>
 #define min(x, y) (((x) < (y))? (x) : (y))
 //#define TEST_TIME
-// #define LOG
-#ifdef TEST_TIME
+//#define LOG
 #include <sys/time.h>
-#endif
 
 #include <iostream>
+
+double infection_time = 0, vaccination_time = 0;
+timeval st, ed;
 
 void Simulation::loadGraph(std::istream& in) {
     BaseModel::loadGraph(in);
@@ -17,10 +19,6 @@ void Simulation::loadGraph(std::istream& in) {
 
 void Simulation::loadParam(std::istream& in) {
     auto mp = BaseModel::loadParam(in);
-    // std::cout << "get param\n";
-    // for (auto p : mp) {
-    //     cout << p.first << ' ' << p.second.size() << '\n';
-    // }
 
     infect_start_day = mp["infect_start_day"][0] - 1;
 
@@ -39,8 +37,6 @@ void Simulation::loadParam(std::istream& in) {
     I_asym.setAvgPeriod(gamma_I_asym * tm.getPeriods());
     I_sym.setAvgPeriod(gamma_I_sym * tm.getPeriods());
 
-    // cout << "set period ok\n";
-
     tau_I_pre = mp["tau_I_pre"][0];
     tau_I_asym = mp["tau_I_asym"][0];
     tau_I_sym = mp["tau_I_sym"][0];
@@ -56,14 +52,11 @@ void Simulation::loadParam(std::istream& in) {
         v = 1 - v;
     }
 
-    // cout << "ms1\n";
-
     prob_trans = mp["prob_transmission"];
     for (uint k = 0; k < N_cm; ++k) {
         for (uint i = 0; i < N_ag; ++i) {
             for (uint j = 0; j < N_ag; ++j) {
                 cmp[k].cm[i][j] *= prob_trans[j];
-                // cout << k << ' ' << i << ' ' << j << ' ' << cmp[k].cm[i][j] << '\n';
             }
         }
         cmp[k].computePmax();
@@ -73,7 +66,6 @@ void Simulation::loadParam(std::istream& in) {
 
     prob_immune_asym = mp["prob_immune_asym"];
     prob_immune_sym = mp["prob_immune_sym"];
-    // cout << "get all\n";
     for (uint i = 0; i < N_ag; ++i) {
         if (prob_death_sym[i] == 1) {
             prob_immune_sym_cond_nd.push_back(0);
@@ -118,14 +110,6 @@ void Simulation::loadInitInfector(std::istream& in) {
         ndp[i].stateID = 'S';
     }
 
-    // cout << "list:\n";
-    // for (uint i = 0; i < N_lc; ++i) {
-    //     for (auto v : coll[i]) {
-    //         cout << v << ' ';
-    //     }
-    //     cout << '\n';
-    // }
-
     uint n;
     in >> n;
     for (uint i = 0; i < n; ++i) {
@@ -143,25 +127,6 @@ void Simulation::loadInitInfector(std::istream& in) {
 
 void Simulation::simulate() {
     statisticInit();
-    // cout << "Ngp = " << N_gp << '\n';
-    // for (uint i = 0; i < N_gp; ++i) {
-    //     cout << "group " << i << '\n';
-    //     for (uint j = 0; j < cgpp[i].nds.size(); ++j) {
-    //         cout << cgpp[i].nds[j] << ' ';
-
-    //     }
-    //     cout << '\n';
-    // }
-    // cout << "N_nd = " << N_nd << '\n';
-    // for (uint i = 0; i < N_nd; ++i) {
-    //     cout << "node " << i << '\n';
-    //     for (uint j = 0; j < N_pr; ++j) {
-    //         for (uint k = 0; k < ndp[i].gp[j].size(); ++k) {
-    //             cout << ndp[i].gp[j][k].getID() << ' ';
-    //         }
-    //         cout << '\n';
-    //     }
-    // }
     BaseModel::simulate();
     statisticEnd();
 }
@@ -182,57 +147,22 @@ double Simulation::epsilon_bar(char state, uint time) {
 }
 
 void Simulation::infection(ExpiringState& ext, double tau, const Time::TimeStep& ts, Nodes& s2e, Nodes& v2e, Nodes& w2e, Nodes& f2e) {
-    // cout << "one infection\n";
-    // cout << "ext length " << ext.size() << '\n';
     for (auto& vec : ext) {
-        #pragma omp parallel num_threads(8)
+        #pragma omp parallel num_threads(16)
         {
             std::vector<uint> tre_s2e, tre_v2e, tre_w2e, tre_f2e;
 
-            #pragma omp for schedule(dynamic)
-            // for (auto u : vec) {
+            #pragma omp for schedule(dynamic, 256) nowait
             for (long unsigned int i = 0; i < vec.size(); ++i) {
-            // cout << "infect from " << u << '\n';
                 for (auto& cgp: ndp[vec[i]].gp[ts.getPeriod()]) {
-                // for (long unsigned int j = 0; j < ndp[vec[i]].gp[ts.getPeriod()].size(); ++j) {
-                //     auto& cgp = ndp[vec[i]].gp[ts.getPeriod()][j];
-                    /*
-                    std::vector<uint> re_s2e, re_v2e, re_w2e;
-                    */
-                    
                     uint n = cgp.size();
                     double k = ceil(n * cgp.getContactMatrix().getPmax());
-                    // cout << "try group " << cgp.getID() << ' ' << cgp.size() << ' ' << k << ' ' << cgp.getContactMatrix().getPmax() << '\n';
                     for (auto idx : Random::choose(n, k)) {
-                        // cout << "chosen " << k << " from " << n << '\n';
                         uint v = cgp.at(idx);
                         char st = ndp[v].stateID;
                         if (st != 'S' && st != 'V' && st != 'W' && st != 'F') continue;
-                        // cout << "get time\n";
-                        // uint dt = ts - ndp[v].ts;
-                        // cout << "got time\n";
                         double p = infect_prob(vec[i], v, cgp, tau, ts);
-                        // double p = epsilon_bar(ndp[v].stateID, dt) * cgp.getContactMatrix().getRate(ndp[vec[i]].age, ndp[v].age) * tau;
                         if (Random::trial(p * n / k)) {
-                            // switch (ndp[v].stateID) {
-                            //     case 'S':
-                            //         s2e.push_back(v);
-                            //         ndp[v].stateID = 'E';
-                            //         break;
-                            //     case 'V':
-                            //         v2e.push_back(v);
-                            //         ndp[v].stateID = 'E';
-                            //         break;
-                            //     case 'W':
-                            //         w2e.push_back(v);
-                            //         ndp[v].stateID = 'E';
-                            //         break;
-                            //     case 'F':
-                            //         f2e.push_back(v);
-                            //         ndp[v].stateID = 'E';
-                            //         break;
-                            // }
-                            
                             if (__sync_bool_compare_and_swap(&ndp[v].stateID, 'S', 'E'))
                                 tre_s2e.push_back(v);
                             else if (__sync_bool_compare_and_swap(&ndp[v].stateID, 'V', 'E'))
@@ -272,9 +202,6 @@ void Simulation::partitionGroupAge(const Nodes& vorg, Nodes& v1, Nodes& v2, cons
 }
 
 void Simulation::simulate_unit(const Time::TimeStep& ts) {
-#ifdef LOG
-    cout << "------- " << ts.getDay() << ' ' << ts.getPeriod() << "-------" << '\n';
-#endif
     Transition trans;
 #ifdef TEST_TIME
     timeval st, ed;
@@ -336,10 +263,8 @@ void Simulation::simulate_unit(const Time::TimeStep& ts) {
     infection(I_pre, tau_I_pre, ts, trans.s2e, trans.v2e, trans.w2e, trans.f2e);
     infection(I_asym, tau_I_asym, ts, trans.s2e, trans.v2e, trans.w2e, trans.f2e);
     infection(I_sym, tau_I_sym, ts, trans.s2e, trans.v2e, trans.w2e, trans.f2e);
-#ifdef TEST_TIME
     gettimeofday(&ed, 0);
-    cout << "\tTime: "<< ed.tv_sec - st.tv_sec + (ed.tv_usec - st.tv_usec) / 1000000.0 << " sec\n";
-#endif
+    infection_time += ed.tv_sec - st.tv_sec + (ed.tv_usec - st.tv_usec) / 1000000.0;
     partitionGroup(I_pre.expire(), trans.i2j, trans.i2k, sigma_asym);
 
     Nodes sym_not_d;
@@ -355,11 +280,6 @@ void Simulation::simulate_unit(const Time::TimeStep& ts) {
     partitionGroupAge(I_asym.expire(), trans.j2r, trans.j2f, prob_immune_asym);
 
     trans.e2i = E.expire();
-#ifdef TEST_TIME
-    gettimeofday(&ed, 0);
-    cout << "\tTime: "<< ed.tv_sec - st.tv_sec + (ed.tv_usec - st.tv_usec) / 1000000.0 << " sec\n";
-#endif
-        
     
     // insert
 #ifdef TEST_TIME
@@ -401,10 +321,6 @@ void Simulation::simulate_unit(const Time::TimeStep& ts) {
     cout << "statistic\n";
 #endif
     statisticUnit(ts, trans);
-#ifdef TEST_TIME
-    gettimeofday(&ed, 0);
-    cout << "\tTime: "<< ed.tv_sec - st.tv_sec + (ed.tv_usec - st.tv_usec) / 1000000.0 << " sec\n";
-#endif
 }
 
 

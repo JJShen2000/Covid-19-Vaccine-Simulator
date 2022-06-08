@@ -32,7 +32,7 @@ def draw(dn, n, states):
         if b == 0:
             b = 1
             for h in hd:
-                yd[h] = np.array([0 for i in range(180)])
+                yd[h] = np.array([0 for i in range(360)])
         exposed += np.array(data["Exposed_Number"]).sum()
         filenum += 1
         for h in hd:
@@ -41,7 +41,7 @@ def draw(dn, n, states):
     for h in hd:
         yd[h] = yd[h] / filenum
     
-    xd = np.array([i for i in range(1, 181)])
+    xd = np.array([i for i in range(1, 361)])
     for s in states:
         if s in state_map.keys():
             h = state_map[s]

@@ -7,6 +7,8 @@
 
 using namespace std;
 
+extern double infection_time, vaccination_time;
+
 int main(int argc, char* argv[]) {
     // cout << argc << '\n';
    // cout << "init\n";
@@ -104,6 +106,8 @@ int main(int argc, char* argv[]) {
     //cout << "start!\n";
     model.simulate();
 
+    printf("infection: %.5lf\n", infection_time);    
+    printf("vaccination: %.5lf\n", vaccination_time);    
 
     return 0;
 }
