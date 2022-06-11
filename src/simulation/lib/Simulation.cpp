@@ -337,10 +337,10 @@ Simulation::BaseVaccStrat* Simulation::VaccStratFactory::read(istream& in) {
     else if (strat_name == "infect_prob_sym") {
         strat = new Simulation::VaccStratInfectiousnessSym;
     }
-    else if (strat_name == "age") {
+    else if (strat_name == "age_first") {
         strat = new Simulation::VaccStratAgeFirst;
     }
-    else if (strat_name == "location") {
+    else if (strat_name == "location_first") {
         strat = new Simulation::VaccStratLocationFirst;
     }
     else if (strat_name == "random") {
@@ -540,7 +540,7 @@ void Simulation::VaccStratOrderBase::vaccinate(const Simulation& sim, const Time
 }
 
 void Simulation::VaccStratAgeFirst::init(const Simulation& sim, Simulation::Dictionary& mp) {
-    cout << "age init\n";
+    // cout << "age init\n";
     VaccStratOrderBase::init(sim, mp);
     auto pq = mp["age_priority"];
     std::vector<std::vector<uint>> ag(sim.N_ag, std::vector<uint>());
@@ -562,18 +562,19 @@ void Simulation::VaccStratAgeFirst::init(const Simulation& sim, Simulation::Dict
 }
 
 void Simulation::VaccStratLocationFirst::init(const Simulation& sim, Simulation::Dictionary& mp) {
+    // cout << "location first\n";
     VaccStratOrderBase::init(sim, mp);
     auto pq = mp["location_priority"];
-    std::vector<std::vector<uint>> ag(sim.N_ag, std::vector<uint>());
+    std::vector<std::vector<uint>> lc(sim.N_lc, std::vector<uint>());
     for (uint i = 0; i < sim.N_nd; ++i) {
-        ag[sim.ndp[i].age].push_back(i);
+        lc[sim.ndp[i].loc].push_back(i);
     }
     std::vector<uint> fst, sec;
     for (auto v : pq) {
-        fst.insert(fst.end(), ag[v].begin(), ag[v].end());
-        ag[v].clear();
+        fst.insert(fst.end(), lc[v].begin(), lc[v].end());
+        lc[v].clear();
     }
-    for (auto& vec : ag) {
+    for (auto& vec : lc) {
         sec.insert(sec.end(), vec.begin(), vec.end());
     }
     Random::shuffle(fst);
