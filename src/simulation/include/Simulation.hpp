@@ -46,9 +46,35 @@ public:
         virtual void updateScore(const Simulation& sim, const Time::TimeStep& ts) override;
     };
 
+    class VaccStratMortality : public VaccStratInfectiousness {
+    public:
+        virtual void updateScore(const Simulation& sim, const Time::TimeStep& ts) override;
+    };
+
+    class VaccStratYLL : public VaccStratInfectiousness {
+    public:
+        virtual void init(const Simulation& sim, Dictionary& mp) override;
+        virtual void updateScore(const Simulation& sim, const Time::TimeStep& ts) override;
+    protected:
+        std::vector<double> yll;
+    };
+
     class VaccStratInfectiousnessSym : public VaccStratInfectnessBase {
     public:
         virtual void updateScore(const Simulation& sim, const Time::TimeStep& ts) override;
+    };
+
+    class VaccStratMortalitySym : public VaccStratInfectiousnessSym {
+    public:
+        virtual void updateScore(const Simulation& sim, const Time::TimeStep& ts) override;
+    };
+
+    class VaccStratYLLSym : public VaccStratInfectiousnessSym {
+    public:
+        virtual void init(const Simulation& sim, Dictionary& mp) override;
+        virtual void updateScore(const Simulation& sim, const Time::TimeStep& ts) override;
+    protected:
+        std::vector<double> yll;
     };
 
     class VaccStratOrderBase : public BaseVaccStrat {
@@ -73,7 +99,6 @@ public:
     class VaccStratRandom : public VaccStratOrderBase {
     public:
         virtual void init(const Simulation& sim, Dictionary& mp) override;
-    
     };
 
     class VaccStratFactory {

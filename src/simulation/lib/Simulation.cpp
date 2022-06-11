@@ -346,6 +346,18 @@ Simulation::BaseVaccStrat* Simulation::VaccStratFactory::read(istream& in) {
     else if (strat_name == "random") {
         strat = new Simulation::VaccStratRandom;
     }
+    else if (strat_name == "death") {
+        strat = new Simulation::VaccStratMortality;
+    }
+    else if (strat_name == "death_sym") {
+        strat = new Simulation::VaccStratMortalitySym;
+    }
+    else if (strat_name == "yll") {
+        strat = new Simulation::VaccStratYLL;
+    }
+    else if (strat_name == "yll_sym") {
+        strat = new Simulation::VaccStratYLLSym;
+    }
 
     return strat;
 }
@@ -444,6 +456,48 @@ void Simulation::VaccStratInfectiousness::updateScore(const Simulation& sim, con
         for (uint i = 0; i < vec.size(); ++i) {
             increaseScore(vec[i], sim.tau_I_sym, sim, ts);
         }
+    }
+}
+
+void Simulation::VaccStratMortality::updateScore(const Simulation& sim, const Time::TimeStep& ts) {
+    Simulation::VaccStratInfectiousness::updateScore(sim, ts);
+
+    for (uint i = 0; i < sim.N_nd; ++i) {
+        score[i] = sim.prob_death_sym[sim.ndp[i].age] * (exp(score[i]) - 1);
+    }
+}
+
+void Simulation::VaccStratYLL::init(const Simulation& sim, Dictionary& mp) {
+    VaccStratInfectiousness::init(sim, mp);
+    yll = mp["yll"];
+}
+
+void Simulation::VaccStratYLL::updateScore(const Simulation& sim, const Time::TimeStep& ts) {
+    Simulation::VaccStratInfectiousness::updateScore(sim, ts);
+
+    for (uint i = 0; i < sim.N_nd; ++i) {
+        score[i] = yll[sim.ndp[i].age] * (exp(score[i]) - 1);
+    }
+}
+
+void Simulation::VaccStratMortalitySym::updateScore(const Simulation& sim, const Time::TimeStep& ts) {
+    Simulation::VaccStratInfectiousnessSym::updateScore(sim, ts);
+
+    for (uint i = 0; i < sim.N_nd; ++i) {
+        score[i] = sim.prob_death_sym[sim.ndp[i].age] * (exp(score[i]) - 1);
+    }
+}
+
+void Simulation::VaccStratYLLSym::init(const Simulation& sim, Dictionary& mp) {
+    VaccStratInfectiousnessSym::init(sim, mp);
+    yll = mp["yll"];
+}
+
+void Simulation::VaccStratYLLSym::updateScore(const Simulation& sim, const Time::TimeStep& ts) {
+    Simulation::VaccStratInfectiousnessSym::updateScore(sim, ts);
+
+    for (uint i = 0; i < sim.N_nd; ++i) {
+        score[i] = yll[sim.ndp[i].age] * (exp(score[i]) - 1);
     }
 }
 
