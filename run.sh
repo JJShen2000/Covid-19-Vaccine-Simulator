@@ -1,6 +1,7 @@
 #!/bin/bash
 
 sim_rounds=100
+dbg=""
 
 preprocess()
 {
@@ -17,6 +18,9 @@ preprocess()
             "-d")
                 vis ${@: -1}
                 exit 0
+                ;;
+            "--debug")
+                dbg="--debug"
                 ;;
             *)
                 if ! [[ $arg =~ ^[0-9]+$ ]]; then
@@ -55,7 +59,7 @@ sim()
 {
     echo "Running Simulation..."
     cd src/simulation
-    source sim.sh $sim_rounds
+    source sim.sh $sim_rounds $dbg
     cd ../..
 
     wait

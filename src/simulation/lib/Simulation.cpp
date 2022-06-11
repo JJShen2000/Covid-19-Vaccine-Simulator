@@ -6,13 +6,10 @@
 #include <algorithm>
 #define min(x, y) (((x) < (y))? (x) : (y))
 //#define TEST_TIME
-// #define LOG
+//#define LOG
 #include <sys/time.h>
 
 #include <iostream>
-
-double infection_time = 0, vaccination_time = 0;
-timeval st, ed;
 
 void Simulation::loadGraph(std::istream& in) {
     BaseModel::loadGraph(in);
@@ -264,8 +261,6 @@ void Simulation::simulate_unit(const Time::TimeStep& ts) {
     infection(I_pre, tau_I_pre, ts, trans.s2e, trans.v2e, trans.w2e, trans.f2e);
     infection(I_asym, tau_I_asym, ts, trans.s2e, trans.v2e, trans.w2e, trans.f2e);
     infection(I_sym, tau_I_sym, ts, trans.s2e, trans.v2e, trans.w2e, trans.f2e);
-    gettimeofday(&ed, 0);
-    infection_time += ed.tv_sec - st.tv_sec + (ed.tv_usec - st.tv_usec) / 1000000.0;
     partitionGroup(I_pre.expire(), trans.i2j, trans.i2k, sigma_asym);
 
     Nodes sym_not_d;
