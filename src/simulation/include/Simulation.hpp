@@ -51,6 +51,31 @@ public:
         virtual void updateScore(const Simulation& sim, const Time::TimeStep& ts) override;
     };
 
+    class VaccStratOrderBase : public BaseVaccStrat {
+    public:
+        virtual void init(const Simulation& sim, Dictionary& mp) override;
+        virtual void vaccinate(const Simulation& sim, const Time::TimeStep& ts, Nodes& s2v, Nodes& v2w) override;
+    protected:
+        std::vector<uint> order;
+        uint head = 0;
+    };
+
+    class VaccStratAgeFirst : public VaccStratOrderBase {
+    public:
+        virtual void init(const Simulation& sim, Dictionary& mp) override;
+    };
+
+    class VaccStratLocationFirst : public VaccStratOrderBase {
+    public:
+        virtual void init(const Simulation& sim, Dictionary& mp) override;
+    };
+
+    class VaccStratRandom : public VaccStratOrderBase {
+    public:
+        virtual void init(const Simulation& sim, Dictionary& mp) override;
+    
+    };
+
     class VaccStratFactory {
     public:
         static Simulation::BaseVaccStrat* read(istream& in);

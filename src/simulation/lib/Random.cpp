@@ -1,4 +1,5 @@
 #include "Random.hpp"
+#include <algorithm>
 
 bool Random::trial(double d) {
     thread_local std::mt19937_64 gen(std::random_device{}());
@@ -31,4 +32,9 @@ double Random::exp_dis(double lambda) {
 uint Random::bino_dis(uint n, double p) {
     thread_local std::mt19937_64 gen(std::random_device{}());
     return std::binomial_distribution<uint>(n, p)(gen);
+}
+
+void Random::shuffle(std::vector<uint>& vec) {
+    thread_local std::mt19937_64 gen(std::random_device{}());
+    std::shuffle(vec.begin(), vec.end(), gen);
 }

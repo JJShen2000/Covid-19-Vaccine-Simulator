@@ -23,6 +23,8 @@ public:
 
     static uint bino_dis(uint n, double p);
 
+    static void shuffle(std::vector<uint>& vec);
+
 //protected:
 //    static std::default_random_engine gen;
 };

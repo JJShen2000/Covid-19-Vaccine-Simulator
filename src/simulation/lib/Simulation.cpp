@@ -1,11 +1,12 @@
 #include "Simulation.hpp"
 #include "sort.hpp"
+#include "Random.hpp"
 #include <math.h>
 #include <map>
 #include <algorithm>
 #define min(x, y) (((x) < (y))? (x) : (y))
 //#define TEST_TIME
-//#define LOG
+// #define LOG
 #include <sys/time.h>
 
 #include <iostream>
@@ -336,6 +337,15 @@ Simulation::BaseVaccStrat* Simulation::VaccStratFactory::read(istream& in) {
     else if (strat_name == "infect_prob_sym") {
         strat = new Simulation::VaccStratInfectiousnessSym;
     }
+    else if (strat_name == "age") {
+        strat = new Simulation::VaccStratAgeFirst;
+    }
+    else if (strat_name == "location") {
+        strat = new Simulation::VaccStratLocationFirst;
+    }
+    else if (strat_name == "random") {
+        strat = new Simulation::VaccStratRandom;
+    }
 
     return strat;
 }
@@ -446,4 +456,82 @@ void Simulation::VaccStratInfectiousnessSym::updateScore(const Simulation& sim, 
             increaseScore(vec[i], sim.tau_I_sym, sim, ts);
         }
     }
+}
+
+void Simulation::VaccStratOrderBase::init(const Simulation& sim, Simulation::Dictionary& mp) {
+    BaseVaccStrat::init(sim, mp);
+}
+
+void Simulation::VaccStratOrderBase::vaccinate(const Simulation& sim, const Time::TimeStep& ts, Nodes& s2v, Nodes& v2w) {
+    uint cnt = 0;
+    if (ts.getDay() < vacc_start_day) return;
+    while (cnt < vacc_rollout && head < order.size()) {
+        uint u = order[head];
+        if (sim.ndp[u].stateID == 'S') {
+            ++cnt;
+            s2v.push_back(u);
+            order.push_back(u);
+            ++head;
+        }
+        if (sim.ndp[u].stateID == 'V') {
+            if (ts.getDay() < vacc_sec_start_day) break;
+            ++cnt;
+            v2w.push_back(u);
+            ++head;
+        }
+        else {
+            ++head;
+        }
+    }
+}
+
+void Simulation::VaccStratAgeFirst::init(const Simulation& sim, Simulation::Dictionary& mp) {
+    cout << "age init\n";
+    VaccStratOrderBase::init(sim, mp);
+    auto pq = mp["age_priority"];
+    std::vector<std::vector<uint>> ag(sim.N_ag, std::vector<uint>());
+    for (uint i = 0; i < sim.N_nd; ++i) {
+        ag[sim.ndp[i].age].push_back(i);
+    }
+    std::vector<uint> fst, sec;
+    for (auto v : pq) {
+        fst.insert(fst.end(), ag[v].begin(), ag[v].end());
+        ag[v].clear();
+    }
+    for (auto& vec : ag) {
+        sec.insert(sec.end(), vec.begin(), vec.end());
+    }
+    Random::shuffle(fst);
+    Random::shuffle(sec);
+    order.insert(order.end(), fst.begin(), fst.end());
+    order.insert(order.end(), sec.begin(), sec.end());
+}
+
+void Simulation::VaccStratLocationFirst::init(const Simulation& sim, Simulation::Dictionary& mp) {
+    VaccStratOrderBase::init(sim, mp);
+    auto pq = mp["location_priority"];
+    std::vector<std::vector<uint>> ag(sim.N_ag, std::vector<uint>());
+    for (uint i = 0; i < sim.N_nd; ++i) {
+        ag[sim.ndp[i].age].push_back(i);
+    }
+    std::vector<uint> fst, sec;
+    for (auto v : pq) {
+        fst.insert(fst.end(), ag[v].begin(), ag[v].end());
+        ag[v].clear();
+    }
+    for (auto& vec : ag) {
+        sec.insert(sec.end(), vec.begin(), vec.end());
+    }
+    Random::shuffle(fst);
+    Random::shuffle(sec);
+    order.insert(order.end(), fst.begin(), fst.end());
+    order.insert(order.end(), sec.begin(), sec.end());
+}
+
+void Simulation::VaccStratRandom::init(const Simulation& sim, Simulation::Dictionary& mp) {
+    VaccStratOrderBase::init(sim, mp);
+    for (uint i = 0; i < sim.N_nd; ++i) {
+        order.push_back(i);
+    }
+    Random::shuffle(order);
 }
