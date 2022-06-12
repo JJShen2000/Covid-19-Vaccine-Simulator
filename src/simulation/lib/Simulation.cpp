@@ -512,6 +512,7 @@ void Simulation::VaccStratOrderBase::init(const Simulation& sim, Simulation::Dic
 }
 
 void Simulation::VaccStratOrderBase::vaccinate(const Simulation& sim, const Time::TimeStep& ts, Nodes& s2v, Nodes& v2w) {
+    if (ts.getPeriod() != 0) return;
     uint cnt = 0;
     if (ts.getDay() < vacc_start_day) return;
     while (cnt < vacc_rollout && head < order.size()) {
