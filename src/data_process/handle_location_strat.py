@@ -12,7 +12,7 @@ tract_path = os.path.join(repo_dir_path, 'data', 'init_data', 'census_tracts.csv
 
 file_list = glob.glob(os.path.join(vac_stract_path, '*'))
 
-# city id => a list of ids of tracts
+# city name => a list of ids of tracts
 city_to_tract_dict = {}
 
 def generate_city_to_tract_dict():
@@ -21,16 +21,19 @@ def generate_city_to_tract_dict():
     # city name => city id
     city_dict = {v: k for k, v in city_df.to_dict()[0].items()}
 
-    for i in range(len(city_dict)):
-        city_to_tract_dict[i] = []
+    # for i in range(len(city_dict)):
+    #     city_to_tract_dict[i] = []
 
     tract_df = pd.read_csv(tract_path, header=None)
 
     # tract id => city name
     tract_dict = tract_df.to_dict()[0]
     for tract_id in tract_dict:
-        city_id = city_dict[tract_dict[tract_id]]
-        city_to_tract_dict[city_id].append(tract_id)
+        # city_id = city_dict[tract_dict[tract_id]]
+        if tract_dict[tract_id] not in city_to_tract_dict:
+            city_to_tract_dict[tract_dict[tract_id]] = [tract_id]
+        else:
+            city_to_tract_dict[tract_dict[tract_id]].append(tract_id)
 
 
 def get_tracts_list(city_list):
@@ -49,7 +52,7 @@ if __name__ == '__main__':
         with open(file_name) as f:
             lines = f.readlines()
             if (lines[0] == 'location_first\n'):
-                city_list = [int(c) for c in lines[1].split()[1:]]
+                city_list = lines[1].split()[1:]
                 location_priority = 'location_priority ' + str(get_tracts_list(city_list))[1:-1].replace(',', '') + '\n'
                 lines[1] =location_priority
 
