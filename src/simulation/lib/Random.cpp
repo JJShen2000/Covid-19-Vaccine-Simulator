@@ -29,6 +29,13 @@ double Random::exp_dis(double lambda) {
     return std::exponential_distribution<double>(lambda)(gen);
 }
 
+double Random::beta_dis(double alpha, double beta) {
+    thread_local std::mt19937_64 gen(std::random_device{}());
+    double x = std::gamma_distribution<double>(alpha, 1)(gen);
+    double y = std::gamma_distribution<double>(beta, 1)(gen);
+    return x / (x + y);
+}
+
 uint Random::bino_dis(uint n, double p) {
     thread_local std::mt19937_64 gen(std::random_device{}());
     return std::binomial_distribution<uint>(n, p)(gen);

@@ -35,7 +35,7 @@ public:
     protected:
         virtual void updateScore(const Simulation& sim, const Time::TimeStep& ts) = 0;
         void increaseScore(uint u, double tau, const Simulation& sim, const Time::TimeStep& ts);
-        double infect_prob(uint u, uint v, const ContactGroup& cgp, double tau, const Time::TimeStep& ts, const Simulation& sim);
+        virtual double infect_prob(uint u, uint v, const ContactGroup& cgp, double tau, const Time::TimeStep& ts, const Simulation& sim);
         double epsilon_bar(char state, uint time, const Simulation& sim);
         
         std::vector<double> score;
@@ -62,6 +62,14 @@ public:
     class VaccStratInfectiousnessSym : public VaccStratInfectnessBase {
     public:
         virtual void updateScore(const Simulation& sim, const Time::TimeStep& ts) override;
+    };
+
+    class VaccStratInfectiousnessSymBias : VaccStratInfectiousnessSym {
+    public:
+        virtual void init(const Simulation& sim, Dictionary& mp) override;
+        virtual double infect_prob(uint u, uint v, const ContactGroup& cgp, double tau, const Time::TimeStep& ts, const Simulation& sim) override;
+    protected:
+        double bias;
     };
 
     class VaccStratMortalitySym : public VaccStratInfectiousnessSym {

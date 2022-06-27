@@ -319,44 +319,6 @@ void Simulation::simulate_unit(const Time::TimeStep& ts) {
     statisticUnit(ts, trans);
 }
 
-
-Simulation::BaseVaccStrat* Simulation::VaccStratFactory::read(istream& in) {
-    std::string strat_name;
-    in >> strat_name;
-
-    BaseVaccStrat* strat = nullptr;
-
-    if (strat_name == "infect_prob") {
-        strat = new Simulation::VaccStratInfectiousness;
-    }
-    else if (strat_name == "infect_prob_sym") {
-        strat = new Simulation::VaccStratInfectiousnessSym;
-    }
-    else if (strat_name == "age_first") {
-        strat = new Simulation::VaccStratAgeFirst;
-    }
-    else if (strat_name == "location_first") {
-        strat = new Simulation::VaccStratLocationFirst;
-    }
-    else if (strat_name == "random") {
-        strat = new Simulation::VaccStratRandom;
-    }
-    else if (strat_name == "death") {
-        strat = new Simulation::VaccStratMortality;
-    }
-    else if (strat_name == "death_sym") {
-        strat = new Simulation::VaccStratMortalitySym;
-    }
-    else if (strat_name == "yll") {
-        strat = new Simulation::VaccStratYLL;
-    }
-    else if (strat_name == "yll_sym") {
-        strat = new Simulation::VaccStratYLLSym;
-    }
-
-    return strat;
-}
-
 void Simulation::BaseVaccStrat::init(const Simulation& sim, Simulation::Dictionary& mp) {
     vacc_rollout = mp["rollout"][0];
     vacc_start_day = mp["first_dose_date"][0] - 1;
@@ -507,6 +469,18 @@ void Simulation::VaccStratInfectiousnessSym::updateScore(const Simulation& sim, 
     }
 }
 
+void Simulation::VaccStratInfectiousnessSymBias::init(const Simulation& sim, Dictionary& mp) {
+    VaccStratInfectiousnessSym::init(sim, mp);
+    bias = mp["bias"][0];
+}
+
+double Simulation::VaccStratInfectiousnessSymBias::infect_prob(uint u, uint v, const ContactGroup& cgp, double tau, const Time::TimeStep& ts, const Simulation& sim) {
+    double p = VaccStratInfectiousnessSym::infect_prob(u, v, cgp, tau, ts, sim);
+    double alpha = p * bias;
+    double beta = bias - alpha;
+    return Random::beta_dis(alpha, beta);\
+}
+
 void Simulation::VaccStratOrderBase::init(const Simulation& sim, Simulation::Dictionary& mp) {
     BaseVaccStrat::init(sim, mp);
 }
@@ -585,4 +559,44 @@ void Simulation::VaccStratRandom::init(const Simulation& sim, Simulation::Dictio
         order.push_back(i);
     }
     Random::shuffle(order);
+}
+
+Simulation::BaseVaccStrat* Simulation::VaccStratFactory::read(istream& in) {
+    std::string strat_name;
+    in >> strat_name;
+
+    BaseVaccStrat* strat = nullptr;
+
+    if (strat_name == "infect_prob") {
+        strat = new Simulation::VaccStratInfectiousness;
+    }
+    else if (strat_name == "infect_prob_sym") {
+        strat = new Simulation::VaccStratInfectiousnessSym;
+    }
+    else if (strat_name == "age_first") {
+        strat = new Simulation::VaccStratAgeFirst;
+    }
+    else if (strat_name == "location_first") {
+        strat = new Simulation::VaccStratLocationFirst;
+    }
+    else if (strat_name == "random") {
+        strat = new Simulation::VaccStratRandom;
+    }
+    else if (strat_name == "death") {
+        strat = new Simulation::VaccStratMortality;
+    }
+    else if (strat_name == "death_sym") {
+        strat = new Simulation::VaccStratMortalitySym;
+    }
+    else if (strat_name == "yll") {
+        strat = new Simulation::VaccStratYLL;
+    }
+    else if (strat_name == "yll_sym") {
+        strat = new Simulation::VaccStratYLLSym;
+    }
+    else if (strat_name == "infect_prob_sym_bias") {
+        strat = new Simulation::VaccStratInfectiousnessSymBias;
+    }
+
+    return strat;
 }

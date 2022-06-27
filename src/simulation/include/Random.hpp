@@ -21,6 +21,8 @@ public:
 
     static double exp_dis(double lambda);
 
+    static double beta_dis(double alpha, double beta);
+
     static uint bino_dis(uint n, double p);
 
     static void shuffle(std::vector<uint>& vec);
