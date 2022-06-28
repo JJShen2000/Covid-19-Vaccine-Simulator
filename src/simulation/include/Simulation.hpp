@@ -64,7 +64,7 @@ public:
         virtual void updateScore(const Simulation& sim, const Time::TimeStep& ts) override;
     };
 
-    class VaccStratInfectiousnessSymBias : VaccStratInfectiousnessSym {
+    class VaccStratInfectiousnessSymBias : public VaccStratInfectiousnessSym {
     public:
         virtual void init(const Simulation& sim, Dictionary& mp) override;
         virtual double infect_prob(uint u, uint v, const ContactGroup& cgp, double tau, const Time::TimeStep& ts, const Simulation& sim) override;
