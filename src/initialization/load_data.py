@@ -37,7 +37,7 @@ def get_contact_group_probabilities(a, df_contact_prob):
 
     age_group_raw = df_contact_prob[df_contact_prob.iloc[:, 2].str.contains(' ')].iloc[:, 2].unique()
     # age_group: ['Child 0-4' 'Child 5-18' 'Adult 19-64' 'Adult 65+']
-    nums_age_group = [1, 1, 5, 3] # 0~10(1), 11~20(1), 21~70(5), 71~100(3)
+    nums_age_group = [1, 1, 4, 4] # 0~10(1), 11~20(1), 21~60(4), 61~100(4)
     
     age_group = []
     for i, n in enumerate(nums_age_group):
@@ -141,9 +141,9 @@ def get_age_population(df_census_tracts, df_age_population, seperate_ages=[5, 19
     return age_population
 
 
-def get_worker_flow(df_age_population, df_city_to_city_commute, df_city, df_town, work_age = [21, 70]):
+def get_worker_flow(df_age_population, df_city_to_city_commute, df_city, df_town, work_age = [21, 60]):
     global worker_population_by_town
-    worker_population_by_town = df_age_population[(df_age_population[2]>=21) & (df_age_population[2]<=70)].drop([2], axis=1).groupby([0, 1], sort=False).sum()
+    worker_population_by_town = df_age_population[(df_age_population[2]>=21) & (df_age_population[2]<=60)].drop([2], axis=1).groupby([0, 1], sort=False).sum()
     worker_population_by_city = worker_population_by_town.groupby([0], sort=False).sum()
     orther_area_worker_population = worker_population_by_city.iloc[-2] + worker_population_by_city.iloc[-1]
     int(orther_area_worker_population)

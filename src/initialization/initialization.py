@@ -112,8 +112,8 @@ class graph_init:
             None
         '''
         child1, child2 = tract_group[:2]
-        adult1 = [x for xs in tract_group[2:7] for x in xs] # itertools.chain()
-        adult2 = [x for xs in tract_group[7:] for x in xs] 
+        adult1 = [x for xs in tract_group[2:6] for x in xs] # itertools.chain()
+        adult2 = [x for xs in tract_group[6:] for x in xs] 
 
         '''Group households (index=0)'''
         people = child1 + child2 + adult1 + adult2
@@ -169,7 +169,7 @@ class graph_init:
             None
         '''
         child1, child2 = tract_group[:2]
-        adult1 = [x for xs in tract_group[2:7] for x in xs] # itertools.chain()
+        adult1 = [x for xs in tract_group[2:6] for x in xs] # itertools.chain()
 
         '''Group play groups (index=2)'''
         self.__assign_by_group_type(child1, 4, 2)
@@ -263,7 +263,7 @@ class graph_init:
                             line += f'2 {self.node_group_attr[p, 2]} {self.node_group_attr[p, 3]} \n'
                         elif j == 1:
                             line += f'3 {self.node_group_attr[p, 4]} {self.node_group_attr[p, 5]} {self.node_group_attr[p, 6]} \n'
-                        elif j >= 2 and j < 7:
+                        elif j >= 2 and j < 6:
                             line += f'1 {self.node_group_attr[p, 7]} \n'
                         else:
                             line += f'2 {self.node_group_attr[p, 8]} {self.node_group_attr[p, 9]} \n'
