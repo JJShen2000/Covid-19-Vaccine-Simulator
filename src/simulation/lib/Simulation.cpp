@@ -1,6 +1,7 @@
 #include "Simulation.hpp"
 #include "sort.hpp"
 #include "Random.hpp"
+#include "util.hpp"
 #include <math.h>
 #include <map>
 #include <algorithm>
@@ -342,20 +343,49 @@ void Simulation::VaccStratInfectnessBase::vaccinate(const Simulation& sim, const
             }
         }
     
-        sort(order.begin(), order.end());
-
-        for (uint i = 0; i < min((uint)order.size(), vacc_rollout); ++i) {
-            // cout << "i " << i << '\n';
-            uint u = order[i].second;
-            // cout << u << ' ' << order[i].first << '\n';
-            if (sim.ndp[u].stateID == 'S') {
-                s2v.push_back(u);
-            }
-            else {
-                // cout << "v2w! " << u << '\n';
-                v2w.push_back(u);
+        // sort(order.begin(), order.end());
+        if (order.size() < vacc_rollout) {
+            for (uint i = 0; i < order.size(); ++i) {
+                // cout << "i " << i << '\n';
+                uint u = order[i].second;
+                // cout << u << ' ' << order[i].first << '\n';
+                if (sim.ndp[u].stateID == 'S') {
+                    s2v.push_back(u);
+                }
+                else {
+                    // cout << "v2w! " << u << '\n';
+                    v2w.push_back(u);
             }
         }
+        }
+        else {
+            auto idxs = smallest(order, vacc_rollout);
+            for (uint i = 0; i < vacc_rollout; ++i) {
+                // cout << "i " << i << '\n';
+                uint u = order[idxs[i]].second;
+                // cout << u << ' ' << order[i].first << '\n';
+                if (sim.ndp[u].stateID == 'S') {
+                    s2v.push_back(u);
+                }
+                else {
+                    // cout << "v2w! " << u << '\n';
+                    v2w.push_back(u);
+            }
+        }
+        
+
+        // for (uint i = 0; i < min((uint)order.size(), vacc_rollout); ++i) {
+        //     // cout << "i " << i << '\n';
+        //     uint u = order[i].second;
+        //     // cout << u << ' ' << order[i].first << '\n';
+        //     if (sim.ndp[u].stateID == 'S') {
+        //         s2v.push_back(u);
+        //     }
+        //     else {
+        //         // cout << "v2w! " << u << '\n';
+        //         v2w.push_back(u);
+        //     }
+        // }
     }
 }
 
