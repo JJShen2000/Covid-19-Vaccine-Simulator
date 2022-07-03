@@ -1,7 +1,7 @@
 #include "Simulation.hpp"
 #include "sort.hpp"
 #include "Random.hpp"
-#include "util.hpp"
+// #include "util.hpp"
 #include <math.h>
 #include <map>
 #include <algorithm>
@@ -331,6 +331,101 @@ void Simulation::VaccStratInfectnessBase::init(const Simulation& sim, Simulation
     BaseVaccStrat::init(sim, mp);
 }
 
+template<typename T>
+T order_statistic(vector<T>& vec, uint l, uint r, uint k) {
+    // cout << "os " << l << ' ' << r << ' ' << k << '\n';
+    if (l == r) return vec[l];
+    thread_local std::mt19937_64 gen(std::random_device{}());
+    swap(vec[r], vec[std::uniform_int_distribution<int>(l, r)(gen)]);
+    T pivot = vec[r];
+    // cout << "pivot " << pivot << "\n";
+    // cout << "query " << k << '\n';
+    // cout << "org: ";
+    // for (int i = 0; i < l; ++i) cout << "_ ";
+    // for (int i = l; i <= r; ++i) {
+    //     cout << vec[i] << ' ';
+    // }
+    // for (int i = r + 1; i < vec.size(); ++i) {
+    //     cout << "_ ";
+    // }
+    // cout << '\n';
+    // int mid = l - 1;
+    uint lmid = l - 1, rmid = r;
+    for (uint i = l; i < rmid; ++i) {
+        if (vec[i] < pivot) {
+            swap(vec[++lmid], vec[i]);
+        }
+        if (vec[i] > pivot) {
+            swap(vec[--rmid], vec[i--]);
+        }
+    }
+    // for (int i = l; i < r; ++i) {
+    //     if (vec[i] <= pivot) {
+    //         swap(vec[++mid], vec[i]);
+    //     }
+    // }
+    // swap(vec[++mid], vec[r]);
+    swap(vec[rmid], vec[r]);
+
+    /*
+        [l, lmid] smaller range
+        [lmid + 1, rmid] equal range
+        [rmid + 1, r] larger range
+    */
+
+    // cout << "aft: ";
+    // for (int i = 0; i < vec.size(); ++i) {
+    //     if (l <= i && i <= r) {
+    //         cout << vec[i];
+    //     }
+    //     else {
+    //         cout << "_";
+    //     }
+    //     if (i == lmid) {
+    //         cout << ">";
+    //     }
+    //     else if (i == rmid) {
+    //         cout << "<";
+    //     }
+    //     else {
+    //         cout << " ";
+    //     }
+    // }
+    // cout << '\n';
+
+    // int llen = mid - l;
+    uint idx = k + l;
+    if (lmid < idx && idx <= rmid) {
+        // cout << "return pivot " << pivot << '\n';
+        return pivot;
+    }
+
+    if (idx <= lmid) return order_statistic(vec, l, lmid, k);
+    
+    // if (k < llen) return order_statistic(vec, l, mid - 1, k);
+    // if (k >= rmid + 1)
+    return order_statistic(vec, rmid + 1, r, idx - rmid - 1);
+
+}
+
+template<typename T>
+std::vector<uint> smallest(std::vector<T>& vec, uint k) {
+    if (k <= 0) return vector<uint>();
+    auto cop = vec;
+    T pivot = order_statistic(cop, 0, vec.size() - 1, k - 1);
+    // cout << k - 1 << "-th is " << pivot << '\n';
+    vector<uint> smaller, equal;
+    for (uint i = 0; i < vec.size(); ++i) {
+        if (vec[i] < pivot) smaller.push_back(i);
+        if (vec[i] == pivot && equal.size() + smaller.size() < k) equal.push_back(i);
+    }
+    while (smaller.size() < k) {
+        smaller.push_back(equal.back());
+        equal.pop_back();
+    }
+    return smaller;
+}
+
 void Simulation::VaccStratInfectnessBase::vaccinate(const Simulation& sim, const Time::TimeStep& ts, Nodes& s2v, Nodes& v2w) {
     if (ts.getDay() >= vacc_start_day && ts.getPeriod() == 0 && vacc_rollout != 0) {
         updateScore(sim, ts);
@@ -355,11 +450,11 @@ void Simulation::VaccStratInfectnessBase::vaccinate(const Simulation& sim, const
                 else {
                     // cout << "v2w! " << u << '\n';
                     v2w.push_back(u);
+                }
             }
         }
-        }
         else {
-            auto idxs = smallest(order, vacc_rollout);
+            std::vector<uint> idxs = smallest(order, vacc_rollout);
             for (uint i = 0; i < vacc_rollout; ++i) {
                 // cout << "i " << i << '\n';
                 uint u = order[idxs[i]].second;
@@ -370,6 +465,7 @@ void Simulation::VaccStratInfectnessBase::vaccinate(const Simulation& sim, const
                 else {
                     // cout << "v2w! " << u << '\n';
                     v2w.push_back(u);
+                }
             }
         }
         
