@@ -67,8 +67,9 @@ protected:
 
     std::ostream* out;
 
-    std::vector<std::vector<uint>> allcnt, scnt, vcnt, wcnt, ecnt, icnt, jcnt, kcnt, fcnt, rcnt, dcnt;
-    std::vector<std::vector<uint>> allnew, snew, vnew, wnew, enew, inew, jnew, knew, fnew, rnew, dnew;
+    std::vector<std::vector<uint>> allcnt, scnt, vcnt, ecnt, icnt, jcnt, kcnt, fcnt, rcnt, dcnt;
+    std::vector<std::vector<uint>> allnew, snew, vnew, enew, inew, jnew, knew, fnew, rnew, dnew;
+    // std::vector<std::vector<uint>> wcnt, wnew;
 };  
 
 #endif

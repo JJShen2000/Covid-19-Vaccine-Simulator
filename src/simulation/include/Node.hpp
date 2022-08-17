@@ -15,7 +15,7 @@ struct Individual {
     Location loc;
     char stateID;
     // std::vector<ContactGroup> gp;
-    Time::TimeStep ts;
+    // Time::TimeStep ts;
     std::vector<std::vector<ContactGroup>> gp;
 };
 
@@ -34,9 +34,9 @@ public:
 
     inline std::vector<ContactGroup>& getGroups(uint period) const;
     
-    inline Time::TimeStep getStartTime() const;
+    // inline Time::TimeStep getStartTime() const;
 
-    inline void setStartTime(const Time::TimeStep& ts);
+    // inline void setStartTime(const Time::TimeStep& ts);
 
     inline void setState(char s);
 

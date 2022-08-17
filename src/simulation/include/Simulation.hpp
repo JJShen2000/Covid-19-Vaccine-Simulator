@@ -15,73 +15,90 @@ class BaseVaccStrat;
 
 class Simulation : public BaseModel {
 public:
-
     using Nodes = std::vector<uint>;
     using Dictionary = std::unordered_map<std::string, std::vector<double>>;
+
+    struct Transition {
+        Nodes s2v;
+        // Nodes v2w, w2e;
+        Nodes s2e, v2e, f2e;
+        Nodes e2i, i2j, i2k;
+        Nodes j2f, j2r, k2r, k2d, k2f;
+    };
 
     class BaseVaccStrat {
     public:
         virtual void init(const Simulation& sim, Dictionary& mp);
-        virtual void vaccinate(const Simulation& sim, const Time::TimeStep& ts, Nodes& s2v, Nodes& v2w) = 0;
+        virtual void vaccinate(const Simulation& sim, const Time::TimeStep& ts, Nodes& s2v) = 0;
+        virtual void updateScore(const Simulation& sim, const Time::TimeStep& ts, const Transition& trans);
     protected:
         uint vacc_rollout;
         uint vacc_start_day;
-        uint vacc_sec_start_day;
+        // uint vacc_sec_start_day;
     };
 
     class VaccStratInfectnessBase : public BaseVaccStrat {
     public:
         virtual void init(const Simulation& sim, Dictionary& mp) override;
-        virtual void vaccinate(const Simulation& sim, const Time::TimeStep& ts, Nodes& s2v, Nodes& v2w) override;
+        virtual void vaccinate(const Simulation& sim, const Time::TimeStep& ts, Nodes& s2v) override;
+        virtual void updateScore(const Simulation& sim, const Time::TimeStep& ts, const Transition& trans) = 0;
     protected:
-        virtual void updateScore(const Simulation& sim, const Time::TimeStep& ts) = 0;
-        void increaseScore(uint u, double tau, const Simulation& sim, const Time::TimeStep& ts);
-        virtual double infect_prob(uint u, uint v, const ContactGroup& cgp, double tau, const Time::TimeStep& ts, const Simulation& sim);
-        double epsilon_bar(char state, uint time, const Simulation& sim);
+        void recalcScore(const Simulation& sim, uint u);
+        void removeInfectNodeScore(const Simulation& sim, uint u, double tau);
+        void insertInfectNodeScore(const Simulation& sim, uint u, double tau);
+        // void increaseScore(uint u, double tau, const Simulation& sim, const Time::TimeStep& ts);
+        virtual double infect_prob(uint u, uint v, const ContactGroup& cgp, double tau, const Simulation& sim);
+        virtual double adjustScore(const Simulation& sim, uint u);
+        double epsilon_bar(char state, const Simulation& sim);
         
         std::vector<double> score;
     };
 
     class VaccStratInfectiousness : public VaccStratInfectnessBase {
     public:
-        virtual void updateScore(const Simulation& sim, const Time::TimeStep& ts) override;
+        // virtual double adjustScore(const Simulation& sim, uint u) override;
+        virtual void updateScore(const Simulation& sim, const Time::TimeStep& ts, const Transition& trans) override;
     };
 
     class VaccStratMortality : public VaccStratInfectiousness {
     public:
-        virtual void updateScore(const Simulation& sim, const Time::TimeStep& ts) override;
+        virtual double adjustScore(const Simulation& sim, uint u) override;
+        // virtual void updateScore(const Simulation& sim, const Time::TimeStep& ts, const Transition& trans) override;
     };
 
     class VaccStratYLL : public VaccStratInfectiousness {
     public:
         virtual void init(const Simulation& sim, Dictionary& mp) override;
-        virtual void updateScore(const Simulation& sim, const Time::TimeStep& ts) override;
+        virtual double adjustScore(const Simulation& sim, uint u) override;
+        // virtual void updateScore(const Simulation& sim, const Time::TimeStep& ts, const Transition& trans) override;
     protected:
         std::vector<double> yll;
     };
 
     class VaccStratInfectiousnessSym : public VaccStratInfectnessBase {
     public:
-        virtual void updateScore(const Simulation& sim, const Time::TimeStep& ts) override;
+        virtual void updateScore(const Simulation& sim, const Time::TimeStep& ts, const Transition& trans) override;
     };
 
     class VaccStratInfectiousnessSymBias : public VaccStratInfectiousnessSym {
     public:
         virtual void init(const Simulation& sim, Dictionary& mp) override;
-        virtual double infect_prob(uint u, uint v, const ContactGroup& cgp, double tau, const Time::TimeStep& ts, const Simulation& sim) override;
+        virtual double infect_prob(uint u, uint v, const ContactGroup& cgp, double tau, const Simulation& sim) override;
     protected:
         double bias;
     };
 
     class VaccStratMortalitySym : public VaccStratInfectiousnessSym {
     public:
-        virtual void updateScore(const Simulation& sim, const Time::TimeStep& ts) override;
+        virtual double adjustScore(const Simulation& sim, uint u) override;
+        // virtual void updateScore(const Simulation& sim, const Time::TimeStep& ts, const Transition& trans) override;
     };
 
     class VaccStratYLLSym : public VaccStratInfectiousnessSym {
     public:
         virtual void init(const Simulation& sim, Dictionary& mp) override;
-        virtual void updateScore(const Simulation& sim, const Time::TimeStep& ts) override;
+        virtual double adjustScore(const Simulation& sim, uint u) override;
+        // virtual void updateScore(const Simulation& sim, const Time::TimeStep& ts, const Transition& trans) override;
     protected:
         std::vector<double> yll;
     };
@@ -89,7 +106,7 @@ public:
     class VaccStratOrderBase : public BaseVaccStrat {
     public:
         virtual void init(const Simulation& sim, Dictionary& mp) override;
-        virtual void vaccinate(const Simulation& sim, const Time::TimeStep& ts, Nodes& s2v, Nodes& v2w) override;
+        virtual void vaccinate(const Simulation& sim, const Time::TimeStep& ts, Nodes& s2v) override;
     protected:
         std::vector<uint> order;
         uint head = 0;
@@ -128,17 +145,10 @@ public:
     friend class VaccStratInfectnessBase;
 protected:
 
-    struct Transition {
-        Nodes s2v, v2w;
-        Nodes s2e, v2e, w2e, f2e;
-        Nodes e2i, i2j, i2k;
-        Nodes j2f, j2r, k2r, k2d, k2f;
-    };
-
     // vaccine ineffectiveness
-    double epsilon_bar(char state, uint time);
+    double epsilon_bar(char state);
 
-    void infection(ExpiringState& ext, double tau, const Time::TimeStep& ts, Nodes& s2e, Nodes& v2e, Nodes& w2e, Nodes& f2e);
+    void infection(ExpiringState& ext, double tau, const Time::TimeStep& ts, Nodes& s2e, Nodes& v2e, Nodes& f2e);
 
     void partitionGroup(const Nodes& vorg, Nodes& v1, Nodes& v2, double p1);
 
@@ -146,7 +156,7 @@ protected:
 
 
     void simulate_unit(const Time::TimeStep& ts);
-    double infect_prob(uint u, uint v, const ContactGroup& cgp, double tau, const Time::TimeStep& ts);
+    double infect_prob(uint u, uint v, const ContactGroup& cgp, double tau);
 
     // statistic method
     virtual void statisticInit() = 0;
@@ -166,8 +176,10 @@ protected:
     double sigma_asym;
 
     // vaccine efficiency
-    std::vector<double> epsilon_V1_bar;
-    std::vector<double> epsilon_V2_bar;
+    // std::vector<double> epsilon_V1_bar;
+    // std::vector<double> epsilon_V2_bar;
+    double epsilon_V1_bar;
+    // double epsilon_V2_bar;
     // priority queue to determine who to vaccinate
     // heap<double, uint> vacc_queue;
 

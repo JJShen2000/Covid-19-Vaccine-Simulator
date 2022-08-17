@@ -127,7 +127,7 @@ run_dbg_mode()
                         fi
                         rs="$(echo "${dd}/result_${i}.csv")"
 
-                        ./${simulator} -g $graph -p $conf -i $init_infectors -v $vaccine -o $rs -s DSSASVWEIJKFRD
+                        ./${simulator} -g $graph -p $conf -i $init_infectors -v $vaccine -o $rs -s DSSASVEIJKFRD
                         wait
                     done
                 done

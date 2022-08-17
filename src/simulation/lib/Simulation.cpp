@@ -22,9 +22,9 @@ void Simulation::loadParam(std::istream& in) {
     infect_start_day = mp["infect_start_day"][0] - 1;
 
     tm.setDay(mp["simulate_day"][0]);
-    for (uint i = 0; i < N_nd; ++i) {
-        ndp[i].ts = tm.begin();
-    }
+    // for (uint i = 0; i < N_nd; ++i) {
+    //     ndp[i].ts = tm.begin();
+    // }
 
     gamma_E = mp["gamma_E"][0];
     gamma_I_pre = mp["gamma_I_pre"][0];
@@ -42,14 +42,17 @@ void Simulation::loadParam(std::istream& in) {
 
     sigma_asym = mp["sigma_I_asym"][0];
 
-    epsilon_V1_bar = mp["epsilon_V1"];
-    for (auto& v : epsilon_V1_bar) {
-        v = 1 - v;
-    }
-    epsilon_V2_bar = mp["epsilon_V2"];
-    for (auto& v : epsilon_V2_bar) {
-        v = 1 - v;
-    }
+    epsilon_V1_bar = 1 - mp["epsilon_V1"][0];
+    // epsilon_V2_bar = 1 - mp["epsilon_V2"][0];
+
+    // epsilon_V1_bar = mp["epsilon_V1"];
+    // for (auto& v : epsilon_V1_bar) {
+    //     v = 1 - v;
+    // }
+    // epsilon_V2_bar = mp["epsilon_V2"];
+    // for (auto& v : epsilon_V2_bar) {
+    //     v = 1 - v;
+    // }
 
     prob_trans = mp["prob_transmission"];
     for (uint k = 0; k < N_cm; ++k) {
@@ -130,26 +133,30 @@ void Simulation::simulate() {
     statisticEnd();
 }
 
-double Simulation::infect_prob(uint u, uint v, const ContactGroup& cgp, double tau, const Time::TimeStep& ts) {
-    return epsilon_bar(ndp[v].stateID, ts - ndp[v].ts) * cgp.getContactMatrix().getRate(ndp[u].age, ndp[v].age) * tau;
+double Simulation::infect_prob(uint u, uint v, const ContactGroup& cgp, double tau) {
+    return epsilon_bar(ndp[v].stateID) * cgp.getContactMatrix().getRate(ndp[u].age, ndp[v].age) * tau;
 }
 
-double Simulation::epsilon_bar(char state, uint time) {
-    switch (state) {
-        case 'V':
-            return epsilon_V1_bar[time >> 1];
-        case 'W':
-            return epsilon_V2_bar[time >> 1];
-    }
-    // S or F
-    return 1;
+double Simulation::epsilon_bar(char state) {
+    return (state == 'V')? epsilon_V1_bar : 1;
+    // switch (state) {
+    //     case 'V':
+    //         // return epsilon_V1_bar[time >> 1];
+    //         return epsilon_V1_bar;
+    //     case 'W':
+    //         return epsilon_V2_bar;
+    //         // return epsilon_V2_bar[time >> 1];
+    // }
+    // // S or F
+    // return 1;
 }
 
-void Simulation::infection(ExpiringState& ext, double tau, const Time::TimeStep& ts, Nodes& s2e, Nodes& v2e, Nodes& w2e, Nodes& f2e) {
+void Simulation::infection(ExpiringState& ext, double tau, const Time::TimeStep& ts, Nodes& s2e, Nodes& v2e, Nodes& f2e) {
     for (auto& vec : ext) {
         #pragma omp parallel num_threads(16)
         {
-            std::vector<uint> tre_s2e, tre_v2e, tre_w2e, tre_f2e;
+            std::vector<uint> tre_s2e, tre_v2e, tre_f2e;
+            // std::vector<uint> tre_w2e;
 
             #pragma omp for schedule(dynamic, 256) nowait
             for (long unsigned int i = 0; i < vec.size(); ++i) {
@@ -159,15 +166,16 @@ void Simulation::infection(ExpiringState& ext, double tau, const Time::TimeStep&
                     for (auto idx : Random::choose(n, k)) {
                         uint v = cgp.at(idx);
                         char st = ndp[v].stateID;
-                        if (st != 'S' && st != 'V' && st != 'W' && st != 'F') continue;
-                        double p = infect_prob(vec[i], v, cgp, tau, ts);
+                        // if (st != 'S' && st != 'V' && st != 'W' && st != 'F') continue;
+                        if (st != 'S' && st != 'V' && st != 'F') continue;
+                        double p = infect_prob(vec[i], v, cgp, tau);
                         if (Random::trial(p * n / k)) {
                             if (__sync_bool_compare_and_swap(&ndp[v].stateID, 'S', 'E'))
                                 tre_s2e.push_back(v);
                             else if (__sync_bool_compare_and_swap(&ndp[v].stateID, 'V', 'E'))
                                 tre_v2e.push_back(v);
-                            else if (__sync_bool_compare_and_swap(&ndp[v].stateID, 'W', 'E'))
-                                tre_w2e.push_back(v);
+                            // else if (__sync_bool_compare_and_swap(&ndp[v].stateID, 'W', 'E'))
+                            //     tre_w2e.push_back(v);
                             else if (__sync_bool_compare_and_swap(&ndp[v].stateID, 'F', 'E'))
                                 tre_f2e.push_back(v);
                         }
@@ -179,7 +187,7 @@ void Simulation::infection(ExpiringState& ext, double tau, const Time::TimeStep&
             {
                 s2e.insert(s2e.end(), tre_s2e.begin(), tre_s2e.end());
                 v2e.insert(v2e.end(), tre_v2e.begin(), tre_v2e.end());
-                w2e.insert(w2e.end(), tre_w2e.begin(), tre_w2e.end());
+                // w2e.insert(w2e.end(), tre_w2e.begin(), tre_w2e.end());
                 f2e.insert(f2e.end(), tre_f2e.begin(), tre_f2e.end());
             }
         }
@@ -202,6 +210,7 @@ void Simulation::partitionGroupAge(const Nodes& vorg, Nodes& v1, Nodes& v2, cons
 
 void Simulation::simulate_unit(const Time::TimeStep& ts) {
     Transition trans;
+    // cout << "unit " << ts.getDay() << '\n';
 #ifdef TEST_TIME
     timeval st, ed;
     gettimeofday(&st, 0);
@@ -209,8 +218,8 @@ void Simulation::simulate_unit(const Time::TimeStep& ts) {
 #ifdef LOG
     cout << "vaccinate\n";
 #endif
-
-    vacc_strat->vaccinate(*this, ts, trans.s2v, trans.v2w);
+    // cout << "vaccinate\n";
+    vacc_strat->vaccinate(*this, ts, trans.s2v);
 
 //     if (ts.getDay() >= vacc_start_day && ts.getPeriod() == 0 && vacc_rollout != 0) {
 //         // update score
@@ -237,18 +246,19 @@ void Simulation::simulate_unit(const Time::TimeStep& ts) {
 
     for (auto v : trans.s2v) {
         ndp[v].stateID = 'V';
-        ndp[v].ts = ts;
+        // ndp[v].ts = ts;
     }
-    for (auto v : trans.v2w) {
-        ndp[v].stateID = 'W';
-        ndp[v].ts = ts;
-    }
+    // for (auto v : trans.v2w) {
+    //     ndp[v].stateID = 'W';
+    //     ndp[v].ts = ts;
+    // }
 
     // extract
     if (ts.getDay() < infect_start_day) {
 #ifdef TEST_TIME
         gettimeofday(&st, 0);
 #endif
+        // cout << "statistic\n";
         statisticUnit(ts, trans);
 #ifdef TEST_TIME
         gettimeofday(&ed, 0);
@@ -259,9 +269,11 @@ void Simulation::simulate_unit(const Time::TimeStep& ts) {
 #ifdef LOG
     cout << "infect\n";
 #endif
-    infection(I_pre, tau_I_pre, ts, trans.s2e, trans.v2e, trans.w2e, trans.f2e);
-    infection(I_asym, tau_I_asym, ts, trans.s2e, trans.v2e, trans.w2e, trans.f2e);
-    infection(I_sym, tau_I_sym, ts, trans.s2e, trans.v2e, trans.w2e, trans.f2e);
+    // cout << "infection\n";
+    infection(I_pre, tau_I_pre, ts, trans.s2e, trans.v2e, trans.f2e);
+    infection(I_asym, tau_I_asym, ts, trans.s2e, trans.v2e, trans.f2e);
+    infection(I_sym, tau_I_sym, ts, trans.s2e, trans.v2e, trans.f2e);
+    // cout << "partition and update\n";
     partitionGroup(I_pre.expire(), trans.i2j, trans.i2k, sigma_asym);
 
     Nodes sym_not_d;
@@ -284,7 +296,7 @@ void Simulation::simulate_unit(const Time::TimeStep& ts) {
 #endif
     for (auto v : trans.s2e) E.insert(v);
     for (auto v : trans.v2e) E.insert(v);
-    for (auto v : trans.w2e) E.insert(v);
+    // for (auto v : trans.w2e) E.insert(v);
     for (auto v : trans.f2e) E.insert(v);
 
     for (auto v : trans.e2i) {
@@ -314,16 +326,25 @@ void Simulation::simulate_unit(const Time::TimeStep& ts) {
 #ifdef TEST_TIME
     gettimeofday(&st, 0);
 #endif
+    // cout << "vaccinate update\n";
+    // exit(38);
+    vacc_strat->updateScore(*this, ts, trans);
+
 #ifdef LOG
     cout << "statistic\n";
 #endif
+    // cout << "statistic\n";
     statisticUnit(ts, trans);
 }
 
 void Simulation::BaseVaccStrat::init(const Simulation& sim, Simulation::Dictionary& mp) {
     vacc_rollout = mp["rollout"][0];
     vacc_start_day = mp["first_dose_date"][0] - 1;
-    vacc_sec_start_day = mp["second_dose_date"][0] - 1;
+    // vacc_sec_start_day = mp["second_dose_date"][0] - 1;
+}
+
+void Simulation::BaseVaccStrat::updateScore(const Simulation& sim, const Time::TimeStep& ts, const Transition& trans) {
+
 }
 
 void Simulation::VaccStratInfectnessBase::init(const Simulation& sim, Simulation::Dictionary& mp) {
@@ -426,15 +447,19 @@ std::vector<uint> smallest(std::vector<T>& vec, uint k) {
     return smaller;
 }
 
-void Simulation::VaccStratInfectnessBase::vaccinate(const Simulation& sim, const Time::TimeStep& ts, Nodes& s2v, Nodes& v2w) {
+void Simulation::VaccStratInfectnessBase::vaccinate(const Simulation& sim, const Time::TimeStep& ts, Nodes& s2v) {
     if (ts.getDay() >= vacc_start_day && ts.getPeriod() == 0 && vacc_rollout != 0) {
-        updateScore(sim, ts);
+        // updateScore(sim, ts);
 
         std::vector<std::pair<double, uint>> order;
         for (uint i = 0; i < sim.N_nd; ++i) {
             char st = sim.ndp[i].stateID;
-            if (st == 'S' || (ts.getDay() >= vacc_sec_start_day && st == 'V')) {
-                order.push_back({score[i], i});
+            // if (st == 'S' || (ts.getDay() >= vacc_sec_start_day && st == 'V')) {
+            //     order.push_back({score[i], i});
+            // }
+            if (st == 'S') {
+                // order.push_back({score[i], i});
+                order.push_back({adjustScore(sim, i), i});
             }
         }
     
@@ -444,13 +469,14 @@ void Simulation::VaccStratInfectnessBase::vaccinate(const Simulation& sim, const
                 // cout << "i " << i << '\n';
                 uint u = order[i].second;
                 // cout << u << ' ' << order[i].first << '\n';
-                if (sim.ndp[u].stateID == 'S') {
-                    s2v.push_back(u);
-                }
-                else {
-                    // cout << "v2w! " << u << '\n';
-                    v2w.push_back(u);
-                }
+                s2v.push_back(u);
+                // if (sim.ndp[u].stateID == 'S') {
+                //     s2v.push_back(u);
+                // }
+                // else {
+                //     // cout << "v2w! " << u << '\n';
+                //     v2w.push_back(u);
+                // }
             }
         }
         else {
@@ -459,13 +485,14 @@ void Simulation::VaccStratInfectnessBase::vaccinate(const Simulation& sim, const
                 // cout << "i " << i << '\n';
                 uint u = order[idxs[i]].second;
                 // cout << u << ' ' << order[i].first << '\n';
-                if (sim.ndp[u].stateID == 'S') {
-                    s2v.push_back(u);
-                }
-                else {
-                    // cout << "v2w! " << u << '\n';
-                    v2w.push_back(u);
-                }
+                s2v.push_back(u);
+                // if (sim.ndp[u].stateID == 'S') {
+                //     s2v.push_back(u);
+                // }
+                // else {
+                //     // cout << "v2w! " << u << '\n';
+                //     v2w.push_back(u);
+                // }
             }
         }
         
@@ -485,69 +512,162 @@ void Simulation::VaccStratInfectnessBase::vaccinate(const Simulation& sim, const
     }
 }
 
-void Simulation::VaccStratInfectnessBase::increaseScore(uint u, double tau, const Simulation& sim, const Time::TimeStep& ts) {
-    for (auto& tcgp : sim.ndp[u].gp) {
-        for (auto& cgp : tcgp) {
-            // cout << "contact group " << cgp.getID() << ' ' << cgp.size() << '\n';
+// void Simulation::VaccStratInfectnessBase::increaseScore(uint u, double tau, const Simulation& sim, const Time::TimeStep& ts) {
+//     for (auto& tcgp : sim.ndp[u].gp) {
+//         for (auto& cgp : tcgp) {
+//             // cout << "contact group " << cgp.getID() << ' ' << cgp.size() << '\n';
+//             for (uint i = 0; i < cgp.size(); ++i) {
+//                 uint v = cgp.at(i);
+                
+//                 // cout << "add score " << v << '\n';
+//                 char st = sim.ndp[v].stateID;
+//                 if (st == 'S' || (st == 'V' && ts.getDay() >= vacc_sec_start_day)) {
+//                     double p = infect_prob(u, v, cgp, tau, ts, sim);
+//                     score[v] += log2(1 - p);
+//                 } 
+                
+//             }
+//         }
+//     }
+// }
+
+double Simulation::VaccStratInfectnessBase::infect_prob(uint u, uint v, const ContactGroup& cgp, double tau, const Simulation& sim) {
+    return epsilon_bar(sim.ndp[v].stateID, sim) * cgp.getContactMatrix().getRate(sim.ndp[u].age, sim.ndp[v].age) * tau;
+} 
+
+double Simulation::VaccStratInfectnessBase::epsilon_bar(char state, const Simulation& sim) {
+    return (state == 'V')? sim.epsilon_V1_bar : 1;
+    // switch (state) {
+    //     case 'V':
+    //         return sim.epsilon_V1_bar;
+    //         // return sim.epsilon_V1_bar[time >> 1];
+    //     case 'W':
+    //         return sim.epsilon_V2_bar;
+    //         // return sim.epsilon_V2_bar[time >> 1];
+    // }
+    // // S or F
+    // return 1;
+}
+
+double Simulation::VaccStratInfectnessBase::adjustScore(const Simulation& sim, uint u) {
+    return score[u];
+}
+
+void Simulation::VaccStratInfectnessBase::recalcScore(const Simulation& sim, uint u) {
+    score[u] = 0.0;
+    auto& ndp = sim.ndp;
+    for (auto& cgps : ndp[u].gp) {
+        for (auto& cgp : cgps) {
             for (uint i = 0; i < cgp.size(); ++i) {
                 uint v = cgp.at(i);
-                
-                // cout << "add score " << v << '\n';
-                char st = sim.ndp[v].stateID;
-                if (st == 'S' || (st == 'V' && ts.getDay() >= vacc_sec_start_day)) {
-                    double p = infect_prob(u, v, cgp, tau, ts, sim);
-                    score[v] += log2(1 - p);
-                } 
-                
+                char st = ndp[v].stateID;
+                if (st == 'I') {
+                    score[u] += log2(1 - infect_prob(u, v, cgp, sim.tau_I_pre, sim));
+                }
+                else if (st == 'J') {
+                    score[u] += log2(1 - infect_prob(u, v, cgp, sim.tau_I_asym, sim));
+                }
+                else if (st == 'K') {
+                    score[u] += log2(1 - infect_prob(u, v, cgp, sim.tau_I_sym, sim));
+                }
+                // if (st == 'I' || st == 'J' || st == 'K') {
+                //     score[u] += log2(1 - infect_prob(u, v, cgp, sim));    
+                // }
             }
         }
     }
 }
 
-double Simulation::VaccStratInfectnessBase::infect_prob(uint u, uint v, const ContactGroup& cgp, double tau, const Time::TimeStep& ts, const Simulation& sim) {
-    return epsilon_bar(sim.ndp[v].stateID, ts - sim.ndp[v].ts, sim) * cgp.getContactMatrix().getRate(sim.ndp[u].age, sim.ndp[v].age) * tau;
-} 
-
-double Simulation::VaccStratInfectnessBase::epsilon_bar(char state, uint time, const Simulation& sim) {
-    switch (state) {
-        case 'V':
-            return sim.epsilon_V1_bar[time >> 1];
-        case 'W':
-            return sim.epsilon_V2_bar[time >> 1];
+void Simulation::VaccStratInfectnessBase::removeInfectNodeScore(const Simulation& sim, uint u, double tau) {
+    auto& ndp = sim.ndp;
+    for (auto& cgps : ndp[u].gp) {
+        for (auto& cgp : cgps) {
+            for (uint i = 0; i < cgp.size(); ++i) {
+                uint v = cgp.at(i);
+                char st = ndp[v].stateID;
+                if (st == 'I' || st == 'V' || st == 'F') {
+                    score[v] -= log2(1 - infect_prob(u, v, cgp, sim.tau_I_pre, sim));
+                }
+                // if (st == 'I' || st == 'J' || st == 'K') {
+                //     score[u] += log2(1 - infect_prob(u, v, cgp, sim));    
+                // }
+            }
+        }
     }
-    // S or F
-    return 1;
 }
 
-void Simulation::VaccStratInfectiousness::updateScore(const Simulation& sim, const Time::TimeStep& ts) {
+void Simulation::VaccStratInfectnessBase::insertInfectNodeScore(const Simulation& sim, uint u, double tau) {
+    auto& ndp = sim.ndp;
+    for (auto& cgps : ndp[u].gp) {
+        for (auto& cgp : cgps) {
+            for (uint i = 0; i < cgp.size(); ++i) {
+                uint v = cgp.at(i);
+                char st = ndp[v].stateID;
+                if (st == 'I' || st == 'V' || st == 'F') {
+                    score[v] += log2(1 - infect_prob(u, v, cgp, sim.tau_I_pre, sim));
+                }
+                // if (st == 'I' || st == 'J' || st == 'K') {
+                //     score[u] += log2(1 - infect_prob(u, v, cgp, sim));    
+                // }
+            }
+        }
+    }
+}
+
+void Simulation::VaccStratInfectiousness::updateScore(const Simulation& sim, const Time::TimeStep& ts, const Transition& trans) {
     // cout << "normal hello\n";
-    for (uint i = 0; i < sim.N_nd; ++i) score[i] = 0.0;
+    // for (uint i = 0; i < sim.N_nd; ++i) score[i] = 0.0;
+    for (auto u : trans.s2v) recalcScore(sim, u);
 
-    for (auto& vec : sim.I_pre) {
-        for (uint i = 0; i < vec.size(); ++i) {
-            increaseScore(vec[i], sim.tau_I_pre, sim, ts);
-        }
+    for (auto u : trans.e2i) insertInfectNodeScore(sim, u, sim.tau_I_pre);
+    for (auto u : trans.i2j) {
+        removeInfectNodeScore(sim, u, sim.tau_I_pre);
+        insertInfectNodeScore(sim, u, sim.tau_I_asym);
+    }
+    for (auto u : trans.i2k) {
+        removeInfectNodeScore(sim, u, sim.tau_I_pre);
+        insertInfectNodeScore(sim, u, sim.tau_I_sym);
     }
 
-    for (auto& vec : sim.I_asym) {
-        for (uint i = 0; i < vec.size(); ++i) {
-            increaseScore(vec[i], sim.tau_I_asym, sim, ts);
-        }
-    }
+    for (auto u : trans.k2d) removeInfectNodeScore(sim, u, sim.tau_I_sym);
+    for (auto u : trans.k2r) removeInfectNodeScore(sim, u, sim.tau_I_sym);
+    for (auto u : trans.k2f) removeInfectNodeScore(sim, u, sim.tau_I_sym);
 
-    for (auto& vec : sim.I_sym) {
-        for (uint i = 0; i < vec.size(); ++i) {
-            increaseScore(vec[i], sim.tau_I_sym, sim, ts);
-        }
-    }
+    for (auto u : trans.j2f) removeInfectNodeScore(sim, u, sim.tau_I_asym);
+    for (auto u : trans.j2r) removeInfectNodeScore(sim, u, sim.tau_I_asym);
+
+    for (auto u : trans.k2f) recalcScore(sim, u); 
+    for (auto u : trans.j2f) recalcScore(sim, u);
+
+    // for (auto& vec : sim.I_pre) {
+    //     for (uint i = 0; i < vec.size(); ++i) {
+    //         increaseScore(vec[i], sim.tau_I_pre, sim);
+    //     }
+    // }
+
+    // for (auto& vec : sim.I_asym) {
+    //     for (uint i = 0; i < vec.size(); ++i) {
+    //         increaseScore(vec[i], sim.tau_I_asym, sim);
+    //     }
+    // }
+
+    // for (auto& vec : sim.I_sym) {
+    //     for (uint i = 0; i < vec.size(); ++i) {
+    //         increaseScore(vec[i], sim.tau_I_sym, sim);
+    //     }
+    // }
 }
 
-void Simulation::VaccStratMortality::updateScore(const Simulation& sim, const Time::TimeStep& ts) {
-    Simulation::VaccStratInfectiousness::updateScore(sim, ts);
+// void Simulation::VaccStratMortality::updateScore(const Simulation& sim, const Time::TimeStep& ts) {
+//     Simulation::VaccStratInfectiousness::updateScore(sim, ts);
 
-    for (uint i = 0; i < sim.N_nd; ++i) {
-        score[i] = sim.prob_death_sym[sim.ndp[i].age] * (exp(score[i]) - 1);
-    }
+//     for (uint i = 0; i < sim.N_nd; ++i) {
+//         score[i] = sim.prob_death_sym[sim.ndp[i].age] * (exp(score[i]) - 1);
+//     }
+// }
+
+double Simulation::VaccStratMortality::adjustScore(const Simulation& sim, uint u) {
+    return sim.prob_death_sym[sim.ndp[u].age] * (pow(2, score[u]) - 1);
 }
 
 void Simulation::VaccStratYLL::init(const Simulation& sim, Dictionary& mp) {
@@ -555,20 +675,28 @@ void Simulation::VaccStratYLL::init(const Simulation& sim, Dictionary& mp) {
     yll = mp["yll"];
 }
 
-void Simulation::VaccStratYLL::updateScore(const Simulation& sim, const Time::TimeStep& ts) {
-    Simulation::VaccStratInfectiousness::updateScore(sim, ts);
+// void Simulation::VaccStratYLL::updateScore(const Simulation& sim, const Time::TimeStep& ts) {
+//     Simulation::VaccStratInfectiousness::updateScore(sim, ts);
 
-    for (uint i = 0; i < sim.N_nd; ++i) {
-        score[i] = yll[sim.ndp[i].age] * (exp(score[i]) - 1);
-    }
+//     for (uint i = 0; i < sim.N_nd; ++i) {
+//         score[i] = yll[sim.ndp[i].age] * (exp(score[i]) - 1);
+//     }
+// }
+
+double Simulation::VaccStratYLL::adjustScore(const Simulation& sim, uint u) {
+    return yll[sim.ndp[u].age] * (pow(2, score[u]) - 1);
 }
 
-void Simulation::VaccStratMortalitySym::updateScore(const Simulation& sim, const Time::TimeStep& ts) {
-    Simulation::VaccStratInfectiousnessSym::updateScore(sim, ts);
+// void Simulation::VaccStratMortalitySym::updateScore(const Simulation& sim, const Time::TimeStep& ts) {
+//     Simulation::VaccStratInfectiousnessSym::updateScore(sim, ts);
 
-    for (uint i = 0; i < sim.N_nd; ++i) {
-        score[i] = sim.prob_death_sym[sim.ndp[i].age] * (exp(score[i]) - 1);
-    }
+//     for (uint i = 0; i < sim.N_nd; ++i) {
+//         score[i] = sim.prob_death_sym[sim.ndp[i].age] * (exp(score[i]) - 1);
+//     }
+// }
+
+double Simulation::VaccStratMortalitySym::adjustScore(const Simulation& sim, uint u) {
+    return sim.prob_death_sym[sim.ndp[u].age] * (pow(2, score[u]) - 1);
 }
 
 void Simulation::VaccStratYLLSym::init(const Simulation& sim, Dictionary& mp) {
@@ -576,23 +704,37 @@ void Simulation::VaccStratYLLSym::init(const Simulation& sim, Dictionary& mp) {
     yll = mp["yll"];
 }
 
-void Simulation::VaccStratYLLSym::updateScore(const Simulation& sim, const Time::TimeStep& ts) {
-    Simulation::VaccStratInfectiousnessSym::updateScore(sim, ts);
+// void Simulation::VaccStratYLLSym::updateScore(const Simulation& sim, const Time::TimeStep& ts) {
+//     Simulation::VaccStratInfectiousnessSym::updateScore(sim, ts);
 
-    for (uint i = 0; i < sim.N_nd; ++i) {
-        score[i] = yll[sim.ndp[i].age] * (exp(score[i]) - 1);
-    }
+//     for (uint i = 0; i < sim.N_nd; ++i) {
+//         score[i] = yll[sim.ndp[i].age] * (exp(score[i]) - 1);
+//     }
+// }
+
+double Simulation::VaccStratYLLSym::adjustScore(const Simulation& sim, uint u) {
+    return yll[sim.ndp[u].age] * (pow(2, score[u]) - 1);
 }
 
-void Simulation::VaccStratInfectiousnessSym::updateScore(const Simulation& sim, const Time::TimeStep& ts) {
+void Simulation::VaccStratInfectiousnessSym::updateScore(const Simulation& sim, const Time::TimeStep& ts, const Transition& trans) {
     // cout << "sym hello\n";
-    for (uint i = 0; i < sim.N_nd; ++i) score[i] = 0.0;
+    // for (uint i = 0; i < sim.N_nd; ++i) score[i] = 0.0;
 
-    for (auto& vec : sim.I_sym) {
-        for (uint i = 0; i < vec.size(); ++i) {
-            increaseScore(vec[i], sim.tau_I_sym, sim, ts);
-        }
-    }
+    // for (auto& vec : sim.I_sym) {
+    //     for (uint i = 0; i < vec.size(); ++i) {
+    //         // increaseScore(vec[i], sim.tau_I_sym, sim);
+    //     }
+    // }
+
+    for (auto u : trans.s2v) recalcScore(sim, u);
+
+    for (auto u : trans.i2k) insertInfectNodeScore(sim, u, sim.tau_I_sym);
+
+    for (auto u : trans.k2d) removeInfectNodeScore(sim, u, sim.tau_I_sym);
+    for (auto u : trans.k2r) removeInfectNodeScore(sim, u, sim.tau_I_sym);
+    for (auto u : trans.k2f) removeInfectNodeScore(sim, u, sim.tau_I_sym);
+
+    for (auto u : trans.k2f) recalcScore(sim, u);
 }
 
 void Simulation::VaccStratInfectiousnessSymBias::init(const Simulation& sim, Dictionary& mp) {
@@ -600,38 +742,38 @@ void Simulation::VaccStratInfectiousnessSymBias::init(const Simulation& sim, Dic
     bias = mp["bias"][0];
 }
 
-double Simulation::VaccStratInfectiousnessSymBias::infect_prob(uint u, uint v, const ContactGroup& cgp, double tau, const Time::TimeStep& ts, const Simulation& sim) {
-    double p = VaccStratInfectiousnessSym::infect_prob(u, v, cgp, tau, ts, sim);
+double Simulation::VaccStratInfectiousnessSymBias::infect_prob(uint u, uint v, const ContactGroup& cgp, double tau, const Simulation& sim) {
+    double p = VaccStratInfectiousnessSym::infect_prob(u, v, cgp, tau, sim);
     double alpha = p * bias;
     double beta = bias - alpha;
-    return Random::beta_dis(alpha, beta);\
+    return Random::beta_dis(alpha, beta);
 }
 
 void Simulation::VaccStratOrderBase::init(const Simulation& sim, Simulation::Dictionary& mp) {
     BaseVaccStrat::init(sim, mp);
 }
 
-void Simulation::VaccStratOrderBase::vaccinate(const Simulation& sim, const Time::TimeStep& ts, Nodes& s2v, Nodes& v2w) {
+void Simulation::VaccStratOrderBase::vaccinate(const Simulation& sim, const Time::TimeStep& ts, Nodes& s2v) {
     if (ts.getPeriod() != 0) return;
-    uint cnt = 0;
     if (ts.getDay() < vacc_start_day) return;
+    uint cnt = 0;
     while (cnt < vacc_rollout && head < order.size()) {
         uint u = order[head];
         if (sim.ndp[u].stateID == 'S') {
             ++cnt;
             s2v.push_back(u);
-            order.push_back(u);
-            ++head;
+            // order.push_back(u);
         }
-        if (sim.ndp[u].stateID == 'V') {
-            if (ts.getDay() < vacc_sec_start_day) break;
-            ++cnt;
-            v2w.push_back(u);
-            ++head;
-        }
-        else {
-            ++head;
-        }
+        ++head;
+        // if (sim.ndp[u].stateID == 'V') {
+        //     if (ts.getDay() < vacc_sec_start_day) break;
+        //     ++cnt;
+        //     v2w.push_back(u);
+        //     ++head;
+        // }
+        // else {
+        //     ++head;
+        // }
     }
 }
 

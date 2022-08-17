@@ -24,13 +24,13 @@ inline std::vector<ContactGroup>& Node::getGroups(uint period) const {
     return inst->gp[period];
 }
 
-inline Time::TimeStep Node::getStartTime() const {
-    return inst->ts;
-}
+// inline Time::TimeStep Node::getStartTime() const {
+//     return inst->ts;
+// }
 
-inline void Node::setStartTime(const Time::TimeStep& ts) {
-    inst->ts = ts;
-}
+// inline void Node::setStartTime(const Time::TimeStep& ts) {
+//     inst->ts = ts;
+// }
 
 inline void Node::setState(char s) {
     inst->stateID = s;
