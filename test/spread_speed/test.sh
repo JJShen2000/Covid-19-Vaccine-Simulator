@@ -1,5 +1,6 @@
 root="../.."
 sim_data="$root/data/sim_data"
+initialization_path="$root/src/initialization"
 simulation_path="$root/src/simulation"
 
 conf_path="./basic.conf"
@@ -10,7 +11,9 @@ vacc_prfx="./vacc_strat_infect_prob"
 vacc_temp="${vacc_prfx}_template.conf"
 res_prfx="./"
 
-../../src/initialization/init.sh
+cd $initialization_path
+./init.sh
+cd ../../test/spread_speed
 
 cd $simulation_path
 make
