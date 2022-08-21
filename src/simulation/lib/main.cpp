@@ -62,27 +62,27 @@ int main(int argc, char* argv[]) {
     }
 
     if (!in_graph.is_open()) {
-        cout << "fail to open " << fname << '\n';
+        cout << "fail to open graph" << '\n';
         return 0;
     }
 
     if (!in_param.is_open()) {
-        cout << "fail to open " << fname << '\n';
+        cout << "fail to open param" << '\n';
         return 0;
     }
 
     if (!in_init.is_open()) {
-        cout << "fail to open " << fname << '\n';
+        cout << "fail to open init" << '\n';
         return 0;
     }
 
     if (!in_vacc.is_open()) {
-        cout << "fail to open " << fname << '\n';
+        cout << "fail to open vacc" << '\n';
         return 0;
     }
 
     if (!out_statistics.is_open()) {
-        cout << "fail to open " << fname << '\n';
+        cout << "fail to open statistic" << '\n';
         return 0;
     }
 
@@ -101,7 +101,7 @@ int main(int argc, char* argv[]) {
     model.setOutputSetting(setting);
 
     //cout << "start!\n";
-    //cout << "start!\n";
+    // cout << "start!\n";
     model.simulate();
 
 

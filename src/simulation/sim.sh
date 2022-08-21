@@ -92,7 +92,7 @@ run()
                         echo "$msg5"
 
                         echo XXX
-                        ./${simulator} -g $graph -p $conf -i $init_infectors -v $vaccine -o $rs -s DSSASVWEIJKFRD >> time.log
+                        ./${simulator} -g $graph -p $conf -i $init_infectors -v $vaccine -o $rs -s DSSASVEIJKFRD >> time.log
                     done
                 done
             done
