@@ -585,7 +585,7 @@ void Simulation::VaccStratInfectnessBase::removeInfectNodeScore(const Simulation
             for (uint i = 0; i < cgp.size(); ++i) {
                 uint v = cgp.at(i);
                 char st = ndp[v].stateID;
-                if (st == 'I' || st == 'V' || st == 'F') {
+                if (st == 'S' || st == 'V' || st == 'F') {
                     score[v] -= log2(1 - infect_prob(u, v, cgp, sim.tau_I_pre, sim));
                 }
                 // if (st == 'I' || st == 'J' || st == 'K') {
@@ -603,7 +603,7 @@ void Simulation::VaccStratInfectnessBase::insertInfectNodeScore(const Simulation
             for (uint i = 0; i < cgp.size(); ++i) {
                 uint v = cgp.at(i);
                 char st = ndp[v].stateID;
-                if (st == 'I' || st == 'V' || st == 'F') {
+                if (st == 'S' || st == 'V' || st == 'F') {
                     score[v] += log2(1 - infect_prob(u, v, cgp, sim.tau_I_pre, sim));
                 }
                 // if (st == 'I' || st == 'J' || st == 'K') {
@@ -617,7 +617,6 @@ void Simulation::VaccStratInfectnessBase::insertInfectNodeScore(const Simulation
 void Simulation::VaccStratInfectiousness::updateScore(const Simulation& sim, const Time::TimeStep& ts, const Transition& trans) {
     // cout << "normal hello\n";
     // for (uint i = 0; i < sim.N_nd; ++i) score[i] = 0.0;
-    for (auto u : trans.s2v) recalcScore(sim, u);
 
     for (auto u : trans.e2i) insertInfectNodeScore(sim, u, sim.tau_I_pre);
     for (auto u : trans.i2j) {
@@ -635,6 +634,8 @@ void Simulation::VaccStratInfectiousness::updateScore(const Simulation& sim, con
 
     for (auto u : trans.j2f) removeInfectNodeScore(sim, u, sim.tau_I_asym);
     for (auto u : trans.j2r) removeInfectNodeScore(sim, u, sim.tau_I_asym);
+
+    for (auto u : trans.s2v) recalcScore(sim, u);
 
     for (auto u : trans.k2f) recalcScore(sim, u); 
     for (auto u : trans.j2f) recalcScore(sim, u);
@@ -726,13 +727,15 @@ void Simulation::VaccStratInfectiousnessSym::updateScore(const Simulation& sim, 
     //     }
     // }
 
-    for (auto u : trans.s2v) recalcScore(sim, u);
+    
 
     for (auto u : trans.i2k) insertInfectNodeScore(sim, u, sim.tau_I_sym);
 
     for (auto u : trans.k2d) removeInfectNodeScore(sim, u, sim.tau_I_sym);
     for (auto u : trans.k2r) removeInfectNodeScore(sim, u, sim.tau_I_sym);
     for (auto u : trans.k2f) removeInfectNodeScore(sim, u, sim.tau_I_sym);
+
+    for (auto u : trans.s2v) recalcScore(sim, u);
 
     for (auto u : trans.k2f) recalcScore(sim, u);
 }
