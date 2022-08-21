@@ -19,6 +19,11 @@ cd $simulation_path
 make
 cd ../../test/spread_speed
 
+vacc_path="./noVacc.conf"
+res_path="res_noVacc.csv"
+"${simulation_path}/simulator" -g $graph_path -p $conf_path -i $init_path -v $vacc_path -o $res_path -s DSSSVRD
+
+
 for i in $(seq 1 10 51);
 do
     vacc_path="$vacc_prfx_$i.conf"
