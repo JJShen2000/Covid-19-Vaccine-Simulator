@@ -617,6 +617,7 @@ void Simulation::VaccStratInfectnessBase::insertInfectNodeScore(const Simulation
 void Simulation::VaccStratInfectiousness::updateScore(const Simulation& sim, const Time::TimeStep& ts, const Transition& trans) {
     // cout << "normal hello\n";
     // for (uint i = 0; i < sim.N_nd; ++i) score[i] = 0.0;
+    if (vacc_rollout == 0) return;
 
     for (auto u : trans.e2i) insertInfectNodeScore(sim, u, sim.tau_I_pre);
     for (auto u : trans.i2j) {
