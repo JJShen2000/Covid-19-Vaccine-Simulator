@@ -3,6 +3,7 @@
 TERMINAL=$(tty)
 sim_rounds=100
 simulator="./simulator"
+compressor="./compress.py"
 dbg=0
 
 data_dir="../../data/sim_data/"
@@ -93,6 +94,7 @@ run()
 
                         echo XXX
                         ./${simulator} -g $graph -p $conf -i $init_infectors -v $vaccine -o $rs -s DSSASVEIJKFRD >> time.log
+                        python3 ./${compressor} < $dd
                     done
                 done
             done
@@ -129,6 +131,7 @@ run_dbg_mode()
 
                         ./${simulator} -g $graph -p $conf -i $init_infectors -v $vaccine -o $rs -s DSSASVEIJKFRD
                         wait
+
                     done
                 done
             done

@@ -3,10 +3,30 @@ import pandas as pd
 import numpy as np
 import functools
 import os
+import csv
 
 def get_stack_data(fnames):
-    for fname in fnames:
-        print(fname)
+    # columns, arrs = None, []
+    # for fname in fnames:
+    #     with open(fname) as f:
+    #         csv_reader = csv.reader(f, delimiter = ',')
+    #         cnt = 0
+    #         arr = []
+    #         for row in csv_reader:
+    #             if cnt == 0:
+    #                 # print(row)
+    #                 columns = row
+    #             else:
+    #                 arr.append(list(map(int, row)))
+    #                 # print(type(row[0]))
+    #                 # print(row)
+    #                 pass
+    #             cnt += 1
+    #         print(np.array(arr).shape)
+    #         arrs.append(np.array(arr, dtype = np.int32))
+    # print(arrs)
+    # print(np.stack(arrs, axis = 3).shape)
+    # return columns, np.stack(arrs, axis = 3)
     dfs = [pd.read_csv(fname) for fname in fnames]
     arrs = [df.values for df in dfs]    
     arr_stack = np.stack(arrs, axis = 0)
@@ -30,16 +50,22 @@ def get_percentile(arr, perc):
 
 def main():
     # fnames = [f'res_{x}1.csv' for x in ['', '1', '2', '3', '4', '5']]
+
     dir = input()
+    cnt = os.getcwd()
+
+    os.chdir(dir)
+    print(os.getcwd())
     fnames = []
-    for filename in os.listdir(dir):
-        f = os.path.join(dir, filename)
+    for filename in os.listdir('./'):
+        f = os.path.join('./', filename)
         # checking if it is a file
+        print(f)
         if os.path.isfile(f):
             # print(f)
-            fnames.append(f)
-
+            fnames.append(filename)
     cols, arrs = get_stack_data(fnames)
+    os.chdir(cnt)
 
     create_compress_file(cols, arrs, os.path.join(dir, 'avg.csv'), np.mean)
     create_compress_file(cols, arrs, os.path.join(dir, 'std.csv'), np.std)

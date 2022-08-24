@@ -232,7 +232,7 @@ void StatisticsAgedGeoStatePopulation::writeHeader() {
                 (*out) << ",";
             }
             adddot = 1;
-            (*out) << " New Added " << column_name[i];
+            (*out) << "New Added " << column_name[i];
         }
     }
         
