@@ -46,7 +46,7 @@ def create_compress_file(cols, arrs, fname, call_back, dtype = np.float32):
     df.to_csv(fname, index = False)
 
 def get_percentile(arr, perc):
-    return arr[int(np.ceil(len(arr) * perc))]
+    return arr[int(np.ceil((len(arr) - 1) * perc))]
 
 def main():
     # fnames = [f'res_{x}1.csv' for x in ['', '1', '2', '3', '4', '5']]
@@ -55,12 +55,12 @@ def main():
     cnt = os.getcwd()
 
     os.chdir(dir)
-    print(os.getcwd())
+    # print(os.getcwd())
     fnames = []
     for filename in os.listdir('./'):
         f = os.path.join('./', filename)
         # checking if it is a file
-        print(f)
+        # print(f)
         if os.path.isfile(f):
             # print(f)
             fnames.append(filename)

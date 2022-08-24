@@ -94,9 +94,11 @@ run()
 
                         echo XXX
                         ./${simulator} -g $graph -p $conf -i $init_infectors -v $vaccine -o $rs -s DSSASVEIJKFRD >> time.log
-                        python3 ./${compressor} < $dd
+                        
                     done
-                done
+                    echo "$dd" | python3 ./${compressor}
+	    	    rm $dd/result_*.csv
+	    	done
             done
         done
     done
@@ -124,6 +126,8 @@ run_dbg_mode()
 
                     for i in $(seq 1 $sim_rounds); do
                         
+			echo ":)"
+
                         if [ $i -eq 1 -a ! -d $dd ]; then 
                             mkdir $dd
                         fi
@@ -131,9 +135,10 @@ run_dbg_mode()
 
                         ./${simulator} -g $graph -p $conf -i $init_infectors -v $vaccine -o $rs -s DSSASVEIJKFRD
                         wait
-
                     done
-                done
+		    echo "$dd" | python3 $compressor
+                    rm $dd/result_*.csv
+	    	done
             done
         done
     done
