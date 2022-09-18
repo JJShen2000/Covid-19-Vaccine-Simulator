@@ -29,8 +29,10 @@ def get_stack_data(fnames):
     # return columns, np.stack(arrs, axis = 3)
     dfs = [pd.read_csv(fname) for fname in fnames]
     arrs = [df.values for df in dfs]    
+    arrs_sum_rows = [np.sum(arr, axis = 0) for arr in arrs]
     arr_stack = np.stack(arrs, axis = 0)
-    return dfs[0].columns, arr_stack
+    arr_sum_rows_stack = np.stack(arrs_sum_rows, axis = 0)
+    return dfs[0].columns, arr_stack, arr_sum_rows_stack
 
 def compress(arr3d, call_back, dtype = np.float32):
     _, m, k = arr3d.shape
@@ -45,8 +47,16 @@ def create_compress_file(cols, arrs, fname, call_back, dtype = np.float32):
     df = pd.DataFrame(com, columns = cols)   
     df.to_csv(fname, index = False)
 
+def create_compress_file_sr(cols, arrs, fname, call_back, dtype = np.float32):
+    _, m = arrs.shape
+    com = np.empty((1, m), dtype = dtype)
+    for i in range(m):
+        com[0, i] = call_back(arrs[:, i])
+    df = pd.DataFrame(com, columns = cols)
+    df.to_csv(fname, index = False)
+
 def get_percentile(arr, perc):
-    return arr[int(np.ceil(len(arr) * perc))]
+    return arr[int(np.ceil((len(arr) - 1) * perc))]
 
 def main():
     # fnames = [f'res_{x}1.csv' for x in ['', '1', '2', '3', '4', '5']]
@@ -55,16 +65,16 @@ def main():
     cnt = os.getcwd()
 
     os.chdir(dir)
-    print(os.getcwd())
+    # print(os.getcwd())
     fnames = []
     for filename in os.listdir('./'):
         f = os.path.join('./', filename)
         # checking if it is a file
-        print(f)
+        # print(f)
         if os.path.isfile(f):
             # print(f)
             fnames.append(filename)
-    cols, arrs = get_stack_data(fnames)
+    cols, arrs, arrs_sr = get_stack_data(fnames)
     os.chdir(cnt)
 
     create_compress_file(cols, arrs, os.path.join(dir, 'avg.csv'), np.mean)
@@ -75,6 +85,16 @@ def main():
 
     create_compress_file(cols, arrs, os.path.join(dir, 'q1.csv'), functools.partial(get_percentile, perc = 0.25), int)
     create_compress_file(cols, arrs, os.path.join(dir, 'q3.csv'), functools.partial(get_percentile, perc = 0.75), int)
+
+    create_compress_file_sr(cols, arrs_sr, os.path.join(dir, 'avg_sr.csv'), np.mean)
+    create_compress_file_sr(cols, arrs_sr, os.path.join(dir, 'std_sr.csv'), np.std)
+
+    create_compress_file_sr(cols, arrs_sr, os.path.join(dir, 'min_sr.csv'), min, int)
+    create_compress_file_sr(cols, arrs_sr, os.path.join(dir, 'max_sr.csv'), max, int)
+
+    create_compress_file_sr(cols, arrs_sr, os.path.join(dir, 'q1_sr.csv'), functools.partial(get_percentile, perc = 0.25), int)
+    create_compress_file_sr(cols, arrs_sr, os.path.join(dir, 'q3_sr.csv'), functools.partial(get_percentile, perc = 0.75), int)
+
 
 if __name__ == '__main__':
     main()
