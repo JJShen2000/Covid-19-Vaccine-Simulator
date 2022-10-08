@@ -294,8 +294,8 @@ void StatisticsAgedGeoStatePopulation::writeTerm(uint town, uint age, bool& addd
             nnew[town][age] = 0;
         }
     }
-    else if (age_opt == AgeOpt::Each) {
-        for (uint town = 0; town < N_lc; ++town) {
+    else if (town_opt == TownOpt::Each) {
+        for (uint age = 0; age < N_ag; ++age) {
             smcnt += cnt[town][age];
             smnew += nnew[town][age];
             nnew[town][age] = 0;
